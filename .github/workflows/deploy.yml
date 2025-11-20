@@ -1,28 +1,19 @@
-# .github/workflows/deploy.yml
-name: Deploy to GitHub Pages
-
+name: Deploy GitHub Pages
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write     # 这行必须保留，是新版 Pages 部署的核心权限
+    branches: [master]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:  # 新增这一行及以下配置
+      name: github-pages  # 必须是这个名称，不能改
     steps:
       - uses: actions/checkout@v4
-
-      # 直接上传当前仓库根目录（或改成 ./dist 等）
+      # 其他构建步骤（比如 npm install、npm run build 等）
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v3  # 注意：deploy-pages 依赖这个步骤上传的产物
         with:
-          path: .
-
-      # 官方部署步骤
+          path: .  # 替换为你的构建产物目录（比如 public、build 等，根据项目实际情况改）
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
