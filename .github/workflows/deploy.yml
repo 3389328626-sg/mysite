@@ -1,42 +1,28 @@
-name: Deploy Pure Static Site to GitHub Pages
+# .github/workflows/deploy.yml
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - master          # 你用的就是 master 分支
-  workflow_dispatch:  # 支持手动触发
+    branches: [ master ]
+  workflow_dispatch:
 
 permissions:
-  contents: read      # 读取代码
-  pages: write        # 允许部署到 GitHub Pages
-  id-token: write     # 新的 Pages 部署方式需要
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  contents: read
+  pages: write
+  id-token: write     # 这行必须保留，是新版 Pages 部署的核心权限
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. 只检出代码，不需要任何构建
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 2. 直接把当前仓库根目录所有文件作为 Pages 内容上传
-      - name: Upload GitHub Pages artifact
+      # 直接上传当前仓库根目录（或改成 ./dist 等）
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .               # 注意这里是 . （点），表示整个仓库根目录
+          path: .
 
-      # 3. 部署
+      # 官方部署步骤
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
-
-      # 4. 自动设置自定义域名 wjq666.top
-      - name: Set Custom Domain
-        uses: peaceiris/actions-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_domain: wjq666.top
