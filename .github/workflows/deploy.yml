@@ -1,34 +1,21 @@
-name: Deploy GitHub Pages
+name: Deploy VuePress to GitHub Pages
+
 on:
   push:
-    branches: [main]  # 触发部署的分支
-
-# 新增：权限配置（放在 on 之后、jobs 之前）
-permissions:
-  id-token: write  # 解决当前报错的核心权限
-  pages: write     # 部署 GitHub Pages 必需的权限
-  contents: read   # 读取仓库代码的基础权限（如果需要拉取代码，必须保留）
+    branches: [master] # 只在 master 分支推送时触发
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages  # 之前已经添加的环境配置
+    permissions: # 提升 token 权限
+      contents: write # 允许推送代码
+      pages: write # 允许操作 GitHub Pages
     steps:
-      - uses: actions/checkout@v4  # 拉取仓库代码
-      
-      # （可选）如果你的项目需要构建（比如 Vue/React/Node 项目），添加构建步骤
-      # - name: Install dependencies
-      #   run: npm install
-      # - name: Build project
-      #   run: npm run build
-      
-      # 上传构建产物（必须用这个 action，deploy-pages 依赖它）
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist  # 替换为你的构建产物目录（dist/public/build 等，根据项目改）
-      
-      # 部署到 GitHub Pages
+      - uses: actions/checkout@v4
+
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          cname: wjq666.top
