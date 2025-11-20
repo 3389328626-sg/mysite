@@ -40,3 +40,30 @@ color: inherit;
 opacity: 0.6;
 font-size: 0.9rem;
 }
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+.photo-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  transition: transform .2s;
+}
+.photo-card:hover {
+  transform: translateY(-4px);
+}
+.photo-card img {
+  width: 100%;
+  display: block;
+}
+.photo-card .caption {
+  padding: 12px;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+body.dark .photo-card {
+  background: #2c2c2e;
+}

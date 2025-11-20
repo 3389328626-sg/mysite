@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/css/style.css">
+<title>Photo Gallery</title>
+</head>
+<body>
+<header>
+<div class="container">
+<h1>Photo Gallery</h1>
+<nav>
+<a href="index.html">首页</a>
+<a href="gallery.html">照片集</a>
+<span id="themeToggle">🌙</span>
+</nav>
+</div>
+</header>
+
+
+<div class="container">
+<div class="gallery" id="galleryContainer"></div>
+</div>
+
+
+<script src="assets/js/main.js"></script>
+<script>
+const photos = [
+{ src: 'assets/img/photo1.jpg', caption: 'Photo 1' },
+{ src: 'assets/img/photo2.jpg', caption: 'Photo 2' },
+{ src: 'assets/img/photo3.jpg', caption: 'Photo 3' },
+{ src: 'assets/img/photo4.jpg', caption: 'Photo 4' },
+{ src: 'assets/img/photo5.jpg', caption: 'Photo 5' },
+{ src: 'assets/img/photo6.jpg', caption: 'Photo 6' }
+];
+
+
+const container = document.getElementById('galleryContainer');
+photos.forEach(photo => {
+const card = document.createElement('div');
+card.className = 'photo-card';
+card.innerHTML = `<img src='${photo.src}' alt='${photo.caption}'><div class='caption'>${photo.caption}</div>`;
+container.appendChild(card);
+});
+</script>
+</body>
+</html>
