@@ -1,19 +1,34 @@
 name: Deploy GitHub Pages
 on:
   push:
-    branches: [master]
+    branches: [main]  # 触发部署的分支
+
+# 新增：权限配置（放在 on 之后、jobs 之前）
+permissions:
+  id-token: write  # 解决当前报错的核心权限
+  pages: write     # 部署 GitHub Pages 必需的权限
+  contents: read   # 读取仓库代码的基础权限（如果需要拉取代码，必须保留）
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:  # 新增这一行及以下配置
-      name: github-pages  # 必须是这个名称，不能改
+    environment:
+      name: github-pages  # 之前已经添加的环境配置
     steps:
-      - uses: actions/checkout@v4
-      # 其他构建步骤（比如 npm install、npm run build 等）
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3  # 注意：deploy-pages 依赖这个步骤上传的产物
+      - uses: actions/checkout@v4  # 拉取仓库代码
+      
+      # （可选）如果你的项目需要构建（比如 Vue/React/Node 项目），添加构建步骤
+      # - name: Install dependencies
+      #   run: npm install
+      # - name: Build project
+      #   run: npm run build
+      
+      # 上传构建产物（必须用这个 action，deploy-pages 依赖它）
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: .  # 替换为你的构建产物目录（比如 public、build 等，根据项目实际情况改）
+          path: ./dist  # 替换为你的构建产物目录（dist/public/build 等，根据项目改）
+      
+      # 部署到 GitHub Pages
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
