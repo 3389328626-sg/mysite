@@ -159,14 +159,11 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--mut
         <button type="submit" style="background:linear-gradient(90deg,var(--accent),#9ad7ff);color:#fff;border:none;padding:12px 20px;border-radius:12px;cursor:pointer;font-size:15px">发送消息</button>
       </form>
       <div style="margin-top:20px;text-align:center">
-        已访问 <strong id="busuanzi_value_site_pv">0</strong> 次
+        已访问 <strong id="visits">0</strong> 次
       </div>
     </aside>
   </div>
 </div>
-
- <!-- 统计 -->
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <script>
 // 工具函数
@@ -183,7 +180,10 @@ $('#theme').onchange = e => {
   localStorage.setItem('theme', t);
 };
 
-
+// 访问次数
+let v = Number(localStorage.getItem('visits')||0) + 1;
+localStorage.setItem('visits', v);
+$('#visits').textContent = v;
 
 // 头像跟随鼠标
 document.onmousemove = e => {
