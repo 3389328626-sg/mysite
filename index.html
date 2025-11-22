@@ -68,7 +68,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--mut
           <option value="light">浅色</option>
           <option value="dark">深色</option>
         </select>
-        <button class="btn" id="celebrate">庆祝一下</button>
+        <button class="btn" id="celebrate">谁点谁有钱</button>
       </div>
     </div>
   </header>
@@ -103,7 +103,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--mut
 
       <section class="card" style="margin-top:20px">
   <h3>🎮 小游戏挑战王JQ</h3>
-  <p style="margin:12px 0 16px;font-weight:600">赢了就有烟花+惊喜哦～</p>
+  <p style="margin:12px 0 16px;font-weight:600">10胜0负找主包领取毕业大礼包。</p>
 
   <div class="game-tabs" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
     <button class="btn tab-btn active" data-game="rps">猜拳</button>
@@ -231,7 +231,7 @@ $$('button[data-a]').forEach(btn=>{
       $('#q-res').style.color = 'var(--accent)';
       celebrate();
     }else{
-      $('#q-res').textContent = '？？？～';
+      $('#q-res').textContent = '???';
       $('#q-res').style.color = 'crimson';
     }
   };
@@ -343,7 +343,7 @@ document.querySelectorAll('#game-rps [data-choice]').forEach(btn => {
       (user==='scissors' && ai==='paper')
     ) {
       rps.win++;
-      res = '666这不是外挂？';
+      res = '666这不是外挂?';
       celebrate();
     } else {
       rps.lose++;
@@ -380,7 +380,7 @@ $('#reaction-box').addEventListener('click', function () {
     clearTimeout(reactionTimeout);
     this.classList.add('too-early');
     this.textContent = '太早啦！';
-    $('#reaction-last').textContent = '提前点击了，重来吧～';
+    $('#reaction-last').textContent = '不准打提前枪。';
     setTimeout(resetReaction, 2000);
   } else {
     // 开始新一轮
