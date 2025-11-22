@@ -63,7 +63,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--mut
       <h1 class="name" id="display-name">王JQ</h1>
       <div class="role">一个帅哥 瓦洛兰特高手 金铲铲高手 王者荣耀高手 旮旯game高手</div>
       <div class="controls">
-        <button class="btn" id="copy-vcard">复制 vCard</button>
+        <button class="btn" id="copy-vcard">获取帅哥联系方式</button>
         <select id="theme" class="btn">
           <option value="light">浅色</option>
           <option value="dark">深色</option>
@@ -152,7 +152,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--mut
     </main>
 
     <aside class="card">
-      <h3>联系我</h3>
+      <h3>联系我（假的根本联系不了）</h3>
       <form id="contact" style="margin-top:16px">
         <input type="email" placeholder="你的邮箱" required style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.1);margin-bottom:12px">
         <textarea placeholder="说点什么吧～" rows="5" required style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.1);margin-bottom:12px;resize:vertical"></textarea>
@@ -227,11 +227,11 @@ $('#carousel').onmouseleave = auto;
 $$('button[data-a]').forEach(btn=>{
   btn.onclick = () => {
     if(btn.dataset.a === 'C'){
-      $('#q-res').innerHTML = '完全正确！🎉';
+      $('#q-res').innerHTML = '必须的！🎉';
       $('#q-res').style.color = 'var(--accent)';
       celebrate();
     }else{
-      $('#q-res').textContent = '再想想～';
+      $('#q-res').textContent = '？？？～';
       $('#q-res').style.color = 'crimson';
     }
   };
@@ -279,22 +279,17 @@ const particles = Array.from({length:88},()=>({
 // 表单
 $('#contact').onsubmit = e => {
   e.preventDefault();
-  alert('消息已收到！谢谢你的留言～（演示环境）');
+  alert('消息没收到！谢谢你的留言～');
   celebrate();
   e.target.reset();
 };
 
 // vCard
 $('#copy-vcard').onclick = async () => {
-  const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:王JQ
-N:王;;;;
-EMAIL:your@email.com
-END:VCARD`;
+  const vcard = `帅哥的微信号是wj4862489`;
   try{
     await navigator.clipboard.writeText(vcard);
-    alert('vCard 已复制到剪贴板！');
+    alert('联系方式 已复制到剪贴板！');
   }catch{
     prompt('复制失败，请手动复制：',vcard);
   }
@@ -348,11 +343,11 @@ document.querySelectorAll('#game-rps [data-choice]').forEach(btn => {
       (user==='scissors' && ai==='paper')
     ) {
       rps.win++;
-      res = '你赢了！王JQ服了😭';
+      res = '666这不是外挂？';
       celebrate();
     } else {
       rps.lose++;
-      res = '王JQ赢了！哈哈哈';
+      res = '菜就多练~';
     }
 
     $('#rps-result').innerHTML = `${res}<br>你 ${emoji[user]} vs 王JQ ${emoji[ai]}`;
