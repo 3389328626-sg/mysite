@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>王JQ的个人主页</title>
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--muted:#6b7280;--accent:#5b8def;--glass:rgba(255,255,255,0.6)}
+[data-theme=dark]{--bg:#0b1220;--card:#0f1724;--muted:#9aa6bf;--accent:#7aa6ff;--glass:rgba(255,255,255,0.03)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--muted);min-height:100vh;background:radial-gradient(circle at 10% 20%,rgba(91,141,239,0.06),transparent 10%),var(--bg)}
+.container{max-width:1100px;margin:40px auto;padding:0 20px}
+.card{background:var(--card);border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1)}
+.header{display:flex;gap:28px;align-items:center;margin-bottom:24px}
+.avatar{width:136px;height:136px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--accent),#9ad7ff);display:grid;place-items:center;flex-shrink:0}
+.avatar svg{width:88%;height:88%}
+.name{font-size:32px;margin:6px 0 4px;color:var(--accent);font-weight:800}
+.hi{font-size:19px}
+.role{font-size:15px;margin-top:4px;font-weight:500}
+.controls{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap}
+.btn{padding:10px 16px;border-radius:12px;background:var(--glass);border:1px solid rgba(0,0,0,0.06);cursor:pointer;font-size:14px;transition:.2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.12)}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:24px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.header{flex-direction:column;text-align:center}}
+
+/* 精简轮播图 */
+.carousel{position:relative;height:460px;border-radius:18px;overflow:hidden;background:var(--card);box-shadow:0 12px 40px rgba(0,0,0,0.15)}
+.carousel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .9s ease}
+.carousel img.active{opacity:1}
+.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);color:#fff;border:none;width:52px;height:52px;border-radius:50%;cursor:pointer;font-size:28px;z-index:10}
+#prev{left:16px}#next{right:16px}
+.dots{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.dot{width:11px;height:11px;border-radius:50%;background:rgba(0,0,0,0.25);cursor:pointer;transition:.3s}
+.dot.active{background:var(--accent);transform:scale(1.4)}
+#canvas-bg{position:fixed;inset:0;z-index:-1}
+
+.tab-btn.active{background:var(--glass);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.big-btn{padding:20px 28px;font-size:28px}
+#reaction-box.ready{background:#10b981 !important;color:#fff}
+#reaction-box.too-early{background:#dc2626 !important;color:#fff}
+</style>
+</head>
+<body>
+<canvas id="canvas-bg"></canvas>
+
+<div class="container">
+  <header class="header card">
+    <div class="avatar" id="avatar">
+      <svg viewBox="0 0 100 100">
+        <defs><linearGradient id="g"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#000" stop-opacity=".06"/></linearGradient></defs>
+        <rect x="4" y="10" width="92" height="80" rx="12" fill="url(#g)"/>
+        <g transform="translate(18,30)">
+          <ellipse cx="14" cy="12" rx="9" ry="6" fill="#fff"/>
+          <ellipse cx="44" cy="12" rx="9" ry="6" fill="#fff"/>
+          <circle id="p1" cx="14" cy="12" r="3" fill="#08212d"/>
+          <circle id="p2" cx="44" cy="12" r="3" fill="#08212d"/>
+        </g>
+        <path d="M26,60 q18,10 36,0" stroke="#08212d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <p class="hi">你好，我是</p>
+      <h1 class="name" id="display-name">王JQ</h1>
+      <div class="role">一个帅哥 瓦洛兰特高手 金铲铲高手 王者荣耀高手 旮旯game高手</div>
+      <div class="controls">
+        <button class="btn" id="copy-vcard">复制 vCard</button>
+        <select id="theme" class="btn">
+          <option value="light">浅色</option>
+          <option value="dark">深色</option>
+        </select>
+        <button class="btn" id="celebrate">庆祝一下</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <main>
+      <!-- 精简轮播图 -->
+      <section class="card">
+        <h3 style="margin-bottom:14px">照片墙</h3>
+        <div class="carousel" id="carousel">
+          <button class="carousel-btn" id="prev">←</button>
+          <button class="carousel-btn" id="next">→</button>
+          <img src="lu01.jpg" class="active" alt="1">
+          <img src="lu02.jpg" alt="2">
+          <!-- <img src="" alt="3">
+          <img src="" alt="4">
+          <img src="" alt="5"> -->
+        </div>
+        <div class="dots" id="dots"></div>
+      </section>
+
+      <section class="card" style="margin-top:20px">
+        <h3>小测验</h3>
+        <p style="margin:12px 0 16px;font-weight:600">这个网页的主人是不是帅哥？</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn" data-a="A">好像是</button>
+          <button class="btn" data-a="B">不是</button>
+          <button class="btn" data-a="C">必须是！</button>
+        </div>
+        <p id="q-res" style="margin-top:12px;font-weight:600"></p>
+      </section>
+
+      <section class="card" style="margin-top:20px">
+  <h3>🎮 小游戏挑战王JQ</h3>
+  <p style="margin:12px 0 16px;font-weight:600">赢了就有烟花+惊喜哦～</p>
+
+  <div class="game-tabs" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="btn tab-btn active" data-game="rps">猜拳</button>
+    <button class="btn tab-btn" data-game="reaction">反应测试</button>
+    <button class="btn tab-btn" data-game="guess">猜数字</button>
+  </div>
+
+  <!-- 猜拳 -->
+  <div id="game-rps" class="game-panel">
+    <p style="text-align:center;font-size:18px;margin-bottom:20px">石头剪刀布！</p>
+    <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap">
+      <button class="btn big-btn" data-choice="rock">✊ 石头</button>
+      <button class="btn big-btn" data-choice="paper">✋ 布</button>
+      <button class="btn big-btn" data-choice="scissors">✌️ 剪刀</button>
+    </div>
+    <div id="rps-result" style="margin-top:20px;text-align:center;font-size:17px;font-weight:600;height:50px"></div>
+    <div style="text-align:center">
+      胜 <span id="rps-win" style="color:var(--accent)">0</span> |
+      平 <span id="rps-tie" style="color:#f59e0b">0</span> |
+      负 <span id="rps-lose" style="color:crimson">0</span>
+    </div>
+  </div>
+
+  <!-- 反应测试 -->
+  <div id="game-reaction" class="game-panel" style="display:none">
+    <div id="reaction-box" style="width:220px;height:220px;margin:30px auto;border-radius:20px;background:#e5e7eb;display:grid;place-items:center;font-size:24px;font-weight:800;cursor:pointer;transition:.3s">
+      点击开始
+    </div>
+    <p id="reaction-info" style="text-align:center">等方块变绿后立刻点击！</p>
+    <div id="reaction-last" style="text-align:center;margin-top:10px;font-size:18px"></div>
+    <div id="reaction-best" style="text-align:center;margin-top:8px;font-weight:600">最佳：-- ms</div>
+  </div>
+
+  <!-- 猜数字 -->
+  <div id="game-guess" class="game-panel" style="display:none">
+    <p style="text-align:center;margin-bottom:20px">我在想一个 1-100 的数字</p>
+    <div style="text-align:center">
+      <input type="number" id="guess-input" min="1" max="100" placeholder="?" style="width:120px;padding:12px;font-size:18px;text-align:center;border-radius:12px;border:1px solid #ccc">
+      <button id="guess-btn" class="btn" style="margin-left:12px;padding:12px 24px">猜！</button>
+    </div>
+    <div id="guess-result" style="margin-top:20px;text-align:center;font-size:20px;font-weight:600;height:50px"></div>
+    <div style="text-align:center;color:#666">已尝试 <span id="guess-tries">0</span> 次</div>
+  </div>
+</section>
+
+    </main>
+
+    <aside class="card">
+      <h3>联系我</h3>
+      <form id="contact" style="margin-top:16px">
+        <input type="email" placeholder="你的邮箱" required style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.1);margin-bottom:12px">
+        <textarea placeholder="说点什么吧～" rows="5" required style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.1);margin-bottom:12px;resize:vertical"></textarea>
+        <button type="submit" style="background:linear-gradient(90deg,var(--accent),#9ad7ff);color:#fff;border:none;padding:12px 20px;border-radius:12px;cursor:pointer;font-size:15px">发送消息</button>
+      </form>
+      <div style="margin-top:20px;text-align:center">
+        已访问 <strong id="visits">0</strong> 次
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+// 工具函数
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+// 主题
+const saved = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+document.documentElement.setAttribute('data-theme', saved);
+$('#theme').value = saved === 'dark' ? 'dark' : 'light';
+$('#theme').onchange = e => {
+  const t = e.target.value;
+  document.documentElement.setAttribute('data-theme', t==='dark'?'dark':'light');
+  localStorage.setItem('theme', t);
+};
+
+// 访问次数
+let v = Number(localStorage.getItem('visits')||0) + 1;
+localStorage.setItem('visits', v);
+$('#visits').textContent = v;
+
+// 头像跟随鼠标
+document.onmousemove = e => {
+  const r = $('#avatar').getBoundingClientRect();
+  const dx = (e.clientX - (r.left + r.width/2)) / 20;
+  const dy = (e.clientY - (r.top + r.height/2)) / 30;
+  $('#p1').setAttribute('cx', 14 + dx); $('#p1').setAttribute('cy', 12 + dy);
+  $('#p2').setAttribute('cx', 44 + dx); $('#p2').setAttribute('cy', 12 + dy);
+};
+
+// 轮播图（精简版）
+const imgs = $$('#carousel img');
+const dotsContainer = $('#dots');
+let idx = 0, timer;
+
+imgs.forEach((_,i)=>{
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  if(i===0) dot.classList.add('active');
+  dot.onclick = () => go(i);
+  dotsContainer.appendChild(dot);
+});
+const dots = $$('.dot');
+
+function go(n){
+  imgs[idx].classList.remove('active');
+  dots[idx].classList.remove('active');
+  idx = (n + imgs.length) % imgs.length;
+  imgs[idx].classList.add('active');
+  dots[idx].classList.add('active');
+}
+$('#prev').onclick = () => go(idx-1);
+$('#next').onclick = () => go(idx+1);
+
+function auto(){ timer = setInterval(()=>go(idx+1), 4500); }
+auto();
+$('#carousel').onmouseenter = () => clearInterval(timer);
+$('#carousel').onmouseleave = auto;
+
+// 小测验
+$$('button[data-a]').forEach(btn=>{
+  btn.onclick = () => {
+    if(btn.dataset.a === 'C'){
+      $('#q-res').innerHTML = '完全正确！🎉';
+      $('#q-res').style.color = 'var(--accent)';
+      celebrate();
+    }else{
+      $('#q-res').textContent = '再想想～';
+      $('#q-res').style.color = 'crimson';
+    }
+  };
+});
+
+// 庆祝烟花
+function celebrate(){
+  for(let i=0;i<50;i++){
+    const p = document.createElement('div');
+    p.textContent = ['❤️','✨','⭐','🎉','🥳'][Math.floor(Math.random()*5)];
+    p.style.cssText = `position:fixed;left:${Math.random()*100}vw;top:-20px;font-size:28px;pointer-events:none;z-index:9999;`;
+    document.body.appendChild(p);
+    const anim = p.animate([
+      {transform: `translateY(-20px) rotate(0deg)`},
+      {transform: `translateY(100vh) rotate(${Math.random()>0.5?'720deg':'-720deg'})`, opacity:0}
+    ], {duration:2000+Math.random()*1000, easing:'cubic-bezier(0,0,0.2,1)'});
+    anim.onfinish = () => p.remove();
+  }
+}
+$('#celebrate').onclick = celebrate;
+
+// 背景粒子
+const canvas = $('#canvas-bg');
+const ctx = canvas.getContext('2d');
+let w,h;
+function resize(){w=canvas.width=innerWidth;h=canvas.height=innerHeight;}
+window.addEventListener('resize',resize); resize();
+const particles = Array.from({length:88},()=>({
+  x:Math.random()*w, y:Math.random()*h,
+  r:1+Math.random()*1.8,
+  vx:(Math.random()-0.5)*0.4, vy:(Math.random()-0.5)*0.4
+}));
+(function draw(){
+  ctx.clearRect(0,0,w,h);
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>w) p.vx*=-1;
+    if(p.y<0||p.y>h) p.vy*=-1;
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent')+'28';
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  });
+  requestAnimationFrame(draw);
+})();
+
+// 表单
+$('#contact').onsubmit = e => {
+  e.preventDefault();
+  alert('消息已收到！谢谢你的留言～（演示环境）');
+  celebrate();
+  e.target.reset();
+};
+
+// vCard
+$('#copy-vcard').onclick = async () => {
+  const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:王JQ
+N:王;;;;
+EMAIL:your@email.com
+END:VCARD`;
+  try{
+    await navigator.clipboard.writeText(vcard);
+    alert('vCard 已复制到剪贴板！');
+  }catch{
+    prompt('复制失败，请手动复制：',vcard);
+  }
+};
+
+// 首访庆祝
+if(!localStorage.getItem('first')){
+  localStorage.setItem('first','1');
+  setTimeout(celebrate,1000);
+}
+
+
+// ==================== 小游戏完整修复版 ====================
+
+const gameScores = JSON.parse(localStorage.getItem('gameScores') || '{}');
+
+// Tab 切换
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.game-panel').forEach(p => p.style.display = 'none');
+    document.getElementById('game-' + btn.dataset.game).style.display = 'block';
+  });
+});
+
+// 1. 猜拳
+let rps = {
+  win: gameScores.rpsWin || 0,
+  tie: gameScores.rpsTie || 0,
+  lose: gameScores.rpsLose || 0
+};
+$('#rps-win').textContent = rps.win;
+$('#rps-tie').textContent = rps.tie;
+$('#rps-lose').textContent = rps.lose;
+
+document.querySelectorAll('#game-rps [data-choice]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const choices = ['rock','paper','scissors'];
+    const user = btn.dataset.choice;
+    const ai = choices[Math.floor(Math.random()*3)];
+    const emoji = {rock:'✊',paper:'✋',scissors:'✌️'};
+    let res = '';
+
+    if (user === ai) {
+      rps.tie++;
+      res = '平局！再来～';
+    } else if (
+      (user==='rock' && ai==='scissors') ||
+      (user==='paper' && ai==='rock') ||
+      (user==='scissors' && ai==='paper')
+    ) {
+      rps.win++;
+      res = '你赢了！王JQ服了😭';
+      celebrate();
+    } else {
+      rps.lose++;
+      res = '王JQ赢了！哈哈哈';
+    }
+
+    $('#rps-result').innerHTML = `${res}<br>你 ${emoji[user]} vs 王JQ ${emoji[ai]}`;
+    $('#rps-win').textContent = rps.win;
+    $('#rps-tie').textContent = rps.tie;
+    $('#rps-lose').textContent = rps.lose;
+    localStorage.setItem('gameScores', JSON.stringify({...gameScores, rpsWin:rps.win, rpsTie:rps.tie, rpsLose:rps.lose}));
+  });
+});
+
+// 2. 反应测试（修复版）
+let reactionTimeout, reactionStartTime;
+let best = gameScores.reactionBest || Infinity;
+if (best !== Infinity) $('#reaction-best').innerHTML = `最佳：<strong>${best}ms</strong>`;
+
+$('#reaction-box').addEventListener('click', function () {
+  if (this.classList.contains('ready')) {
+    // 正常点击
+    const time = Date.now() - reactionStartTime;
+    $('#reaction-last').innerHTML = `本次：<strong style="color:${time<200?'#10b981':time<300?'orange':'#dc2626'}">${time}ms</strong>`;
+    if (time < best) {
+      best = time;
+      $('#reaction-best').innerHTML = `最佳：<strong style="color:var(--accent)">${best}ms 🎉</strong>`;
+      celebrate();
+      localStorage.setItem('gameScores', JSON.stringify({...gameScores, reactionBest: best}));
+    }
+    setTimeout(resetReaction, 2000);
+  } else if (reactionTimeout) {
+    // 提前点
+    clearTimeout(reactionTimeout);
+    this.classList.add('too-early');
+    this.textContent = '太早啦！';
+    $('#reaction-last').textContent = '提前点击了，重来吧～';
+    setTimeout(resetReaction, 2000);
+  } else {
+    // 开始新一轮
+    this.textContent = '准备...';
+    this.style.background = '#f59e0b';
+    const delay = 2000 + Math.random() * 4000;
+    reactionTimeout = setTimeout(() => {
+      this.classList.add('ready');
+      this.textContent = '现在！';
+      this.style.background = '#10b981';
+      reactionStartTime = Date.now();
+      reactionTimeout = null;
+    }, delay);
+  }
+});
+
+function resetReaction() {
+  $('#reaction-box').className = '';
+  $('#reaction-box').textContent = '点击开始';
+  $('#reaction-box').style.background = '#e5e7eb';
+  $('#reaction-last').textContent = '';
+}
+
+// 3. 猜数字（修复版）
+let target = Math.floor(Math.random() * 100) + 1;
+let tries = 0;
+
+$('#guess-btn').addEventListener('click', guessIt);
+$('#guess-input').addEventListener('keydown', e => e.key==='Enter' && guessIt());
+
+function guessIt() {
+  const val = +$('#guess-input').value;
+  if (!val || val < 1 || val > 100) return alert('请输入 1-100 的数字哦～');
+  tries++;
+  $('#guess-tries').textContent = tries;
+
+  if (val === target) {
+    $('#guess-result').style.color = 'var(--accent)';
+    $('#guess-result').textContent = `正确！用了 ${tries} 次 🎉`;
+    celebrate();
+    setTimeout(() => {
+      target = Math.floor(Math.random() * 100) + 1;
+      tries = 0;
+      $('#guess-tries').textContent = '0';
+      $('#guess-result').textContent = '';
+      $('#guess-input').value = '';
+    }, 2500);
+  } else if (val < target) {
+    $('#guess-result').style.color = 'orange';
+    $('#guess-result').textContent = '太小了，再大一点！';
+  } else {
+    $('#guess-result').style.color = 'crimson';
+    $('#guess-result').textContent = '太大了，再小一点！';
+  }
+  $('#guess-input').value = '';
+}
+
+
+</script>
+</body>
+</html>
