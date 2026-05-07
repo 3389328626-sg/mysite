@@ -5,523 +5,389 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>基于 Spring Boot 的电商智能推荐系统 — 毕业答辩</title>
 <style>
-/* ===== CSS Reset & Variables ===== */
 *{margin:0;padding:0;box-sizing:border-box}
-
 :root {
-  --bg: #f8fafc;
-  --bg2: #eef2f6;
-  --surface: #ffffff;
-  --surface2: #e2e8f0;
-  --border: #e2e8f0;
-  --primary: #6366f1;
-  --primary2: #4f46e5;
-  --accent: #06b6d4;
-  --accent2: #ec4899;
-  --gold: #d97706;
-  --text: #1e293b;
-  --text2: #64748b;
-  --green: #10b981;
-  --red: #ef4444;
-  --orange: #f97316;
-  --shadow: 0 4px 24px rgba(0,0,0,0.06);
-  --shadow-hover: 0 12px 40px rgba(0,0,0,0.1);
-  --font: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
-  --radius: 16px;
-  --transition: 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+  --bg:#f1f5f9;
+  --surface:#ffffff;
+  --border:#d1d5db;
+  --primary:#4338ca;
+  --primary-light:#eef2ff;
+  --accent:#0891b2;
+  --accent-light:#ecfeff;
+  --accent2:#be185d;
+  --accent2-light:#fdf2f8;
+  --gold:#b45309;
+  --gold-light:#fffbeb;
+  --green:#047857;
+  --green-light:#ecfdf5;
+  --orange:#c2410c;
+  --orange-light:#fff7ed;
+  --text:#111827;
+  --text2:#4b5563;
+  --text3:#9ca3af;
+  --code-bg:#f8fafc;
+  --code-border:#e2e8f0;
+  --shadow:0 1px 3px rgba(0,0,0,0.08);
+  --shadow-lg:0 4px 16px rgba(0,0,0,0.08);
+  --font:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'Cascadia Code','Fira Code','Consolas',monospace;
+  --radius:12px;
 }
+body { font-family:var(--font); background:var(--bg); color:var(--text); overflow:hidden; height:100vh; width:100vw; user-select:none; }
 
-/* ===== Base ===== */
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  overflow: hidden;
-  height: 100vh;
-  width: 100vw;
-  user-select: none;
-}
+/* ===== Decorative Elements ===== */
+.deco { position:absolute; pointer-events:none; z-index:0; }
+.slide > *:not(.deco):not(.cover-particles) { position:relative; z-index:1; }
 
-/* ===== Slide Container ===== */
-#slides {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-}
-.slide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 80px;
-  opacity: 0;
-  transform: translateX(80px);
-  pointer-events: none;
-  transition: none;
-}
-.slide.active {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: all;
-  z-index: 1;
-}
+/* Gradient blobs */
+.blob { border-radius:50%; filter:blur(60px); opacity:0.12; }
+.blob-1 { width:300px; height:300px; background:var(--primary); top:-60px; right:-60px; }
+.blob-2 { width:250px; height:250px; background:var(--accent); bottom:-40px; left:-40px; }
+.blob-3 { width:200px; height:200px; background:var(--accent2); top:50%; left:-80px; transform:translateY(-50%); }
+.blob-4 { width:280px; height:280px; background:var(--orange); bottom:-50px; right:10%; }
+.blob-sm { width:140px; height:140px; filter:blur(40px); opacity:0.15; }
 
-/* ===== Progress Bar ===== */
-#progress-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  background: linear-gradient(90deg,var(--primary),var(--accent));
-  transition: width 0.5s ease;
-  z-index: 1000;
-  border-radius: 0 2px 2px 0;
-}
+/* Dot grid pattern */
+.dot-grid { background-image:radial-gradient(circle, #cbd5e1 1px, transparent 1px); background-size:24px 24px; opacity:0.4; inset:40px; border-radius:var(--radius); }
 
-/* ===== Navigation Dots ===== */
-#nav-dots {
-  position: fixed;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 1000;
-}
-.nav-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #cbd5e1;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 2px solid transparent;
-}
-.nav-dot.active { background: var(--primary); border-color: var(--primary2); transform: scale(1.3); }
-.nav-dot:hover { background: var(--primary2); }
+/* Corner accents */
+.corner-tl { top:30px; left:30px; width:60px; height:60px; border-top:3px solid; border-left:3px solid; border-radius:8px 0 0 0; opacity:0.2; }
+.corner-br { bottom:30px; right:30px; width:60px; height:60px; border-bottom:3px solid; border-right:3px solid; border-radius:0 0 8px 0; opacity:0.2; }
+.corner-tl.primary { border-color:var(--primary); }
+.corner-br.primary { border-color:var(--primary); }
+.corner-tl.accent { border-color:var(--accent); }
+.corner-br.accent { border-color:var(--accent); }
 
-#nav-hint {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  gap: 16px;
-  font-size: 13px;
-  color: var(--text2);
-}
-.nav-key {
-  background: var(--surface);
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  font-size: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-.nav-key kbd { color: var(--primary); font-weight: 700; }
+/* Large watermark icon */
+.deco-icon { font-size:12rem; opacity:0.04; line-height:1; }
+.deco-icon.top-right { top:-20px; right:20px; }
+.deco-icon.bottom-left { bottom:-20px; left:20px; }
+.deco-icon.center-right { top:50%; right:40px; transform:translateY(-50%); }
 
-/* ===== Typography ===== */
-h1 { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 40px; color: var(--text); position: relative; }
-h2::after { content:''; display:block; width:60px; height:4px; background:linear-gradient(90deg,var(--primary),var(--accent)); margin:12px auto 0; border-radius:2px; }
-h3 { font-size: 1.3rem; font-weight: 600; color: var(--primary2); margin-bottom: 10px; }
-.slide-center { text-align: center; }
+/* Decorative rings */
+.ring { border-radius:50%; border:2px solid; opacity:0.08; }
+.ring-lg { width:400px; height:400px; }
+.ring-md { width:250px; height:250px; }
+.ring-sm { width:120px; height:120px; }
 
-/* ===== Cards ===== */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  transition: all var(--transition);
-  cursor: default;
-  box-shadow: var(--shadow);
-}
-.card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow-hover); }
-.card-grid { display: grid; gap: 20px; width: 100%; max-width: 1100px; }
-.card-grid.col2 { grid-template-columns: 1fr 1fr; }
-.card-grid.col3 { grid-template-columns: 1fr 1fr 1fr; }
-.card-grid.col4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+/* Diagonal stripe accent */
+.stripe { width:200px; height:400px; opacity:0.03; transform:rotate(-15deg); }
+.stripe-bg { repeating-linear-gradient:45deg, var(--primary) 0, var(--primary) 2px, transparent 2px, transparent 16px); }
 
-/* ===== Tech Tags ===== */
-.tag {
-  display: inline-block;
-  padding: 5px 14px;
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 600;
-  margin: 3px;
-}
-.tag-purple { background: #eef2ff; color: #4f46e5; }
-.tag-cyan { background: #ecfeff; color: #0891b2; }
-.tag-pink { background: #fdf2f8; color: #db2777; }
-.tag-green { background: #ecfdf5; color: #059669; }
-.tag-orange { background: #fff7ed; color: #ea580c; }
-.tag-gold { background: #fffbeb; color: #b45309; }
-.tag-red { background: #fef2f2; color: #dc2626; }
+/* Floating dots */
+.float-dot { border-radius:50%; animation:float-drift 6s ease-in-out infinite alternate; }
+@keyframes float-drift { 0%{transform:translate(0,0)} 100%{transform:translate(10px,-15px)} }
+.float-dot.d1 { width:8px; height:8px; background:var(--primary); opacity:0.3; top:15%; left:8%; animation-delay:0s; }
+.float-dot.d2 { width:6px; height:6px; background:var(--accent); opacity:0.25; top:25%; right:12%; animation-delay:1s; }
+.float-dot.d3 { width:10px; height:10px; background:var(--accent2); opacity:0.2; bottom:20%; left:15%; animation-delay:2s; }
+.float-dot.d4 { width:5px; height:5px; background:var(--orange); opacity:0.3; top:60%; right:8%; animation-delay:0.5s; }
+.float-dot.d5 { width:7px; height:7px; background:var(--green); opacity:0.2; bottom:30%; right:20%; animation-delay:1.5s; }
 
-/* ===== Interactive Recommendation Engine ===== */
-.engine-pipeline {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 30px;
-  justify-content: center;
-}
-.pipe-node {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  text-align: center;
-  min-width: 120px;
-  transition: all 0.3s;
-  cursor: pointer;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.pipe-node:hover { border-color: var(--primary); box-shadow: 0 0 20px rgba(99,102,241,0.15); }
-.pipe-node.active-node { border-color: var(--accent); box-shadow: 0 0 28px rgba(6,182,212,0.2); animation: pulse-border 1.5s infinite; background: #f0fdfa; }
-@keyframes pulse-border { 0%,100%{box-shadow:0 0 12px rgba(6,182,212,0.1)} 50%{box-shadow:0 0 28px rgba(6,182,212,0.25)} }
-.pipe-arrow { font-size: 1.5rem; color: var(--text2); }
-.pipe-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+/* Code editor frame */
+.code-frame { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+.code-frame-bar { display:flex; align-items:center; gap:6px; padding:8px 14px; background:#f9fafb; border-bottom:1px solid #e5e7eb; }
+.code-frame-dot { width:10px; height:10px; border-radius:50%; }
+.code-frame-title { font-size:11px; color:var(--text3); margin-left:8px; font-family:var(--mono); }
+.code-frame-body { padding:0; }
+
+/* Metric gauge background */
+.gauge-bg { width:100%; height:100%; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.04; font-size:8rem; pointer-events:none; }
+
+/* Slides */
+#slides { position:relative; width:100vw; height:100vh; }
+.slide { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 80px; opacity:0; transform:translateX(60px); pointer-events:none; }
+.slide.active { opacity:1; transform:translateX(0); pointer-events:all; z-index:1; }
+.slide-center { text-align:center; }
+
+/* Progress & Nav */
+#progress-bar { position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width 0.5s; z-index:1000; }
+#nav-dots { position:fixed; right:16px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px; z-index:1000; }
+.nav-dot { width:8px; height:8px; border-radius:50%; background:#d1d5db; cursor:pointer; transition:all 0.3s; }
+.nav-dot.active { background:var(--primary); transform:scale(1.4); }
+#nav-hint { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:1000; display:flex; gap:12px; font-size:12px; color:var(--text3); }
+.nav-key { background:var(--surface); padding:4px 12px; border-radius:16px; border:1px solid var(--border); font-size:11px; }
+.nav-key kbd { color:var(--primary); font-weight:700; }
+
+/* Typography */
+h1 { font-size:2.8rem; font-weight:800; background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+h2 { font-size:2rem; font-weight:700; color:var(--text); margin-bottom:32px; }
+h2::after { content:''; display:block; width:48px; height:3px; background:linear-gradient(90deg,var(--primary),var(--accent)); margin:10px auto 0; border-radius:2px; }
+h3 { font-size:1.15rem; font-weight:600; color:var(--primary); margin-bottom:8px; }
+
+/* Cards */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+.card:hover { box-shadow:var(--shadow-lg); }
+.card-grid { display:grid; gap:16px; width:100%; max-width:1000px; }
+.card-grid.col2 { grid-template-columns:1fr 1fr; }
+.card-grid.col3 { grid-template-columns:1fr 1fr 1fr; }
+.card-grid.col4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+
+/* Tags */
+.tag { display:inline-block; padding:4px 12px; border-radius:99px; font-size:12px; font-weight:600; margin:2px; }
+.tag-purple { background:var(--primary-light); color:var(--primary); }
+.tag-cyan { background:var(--accent-light); color:var(--accent); }
+.tag-pink { background:var(--accent2-light); color:var(--accent2); }
+.tag-green { background:var(--green-light); color:var(--green); }
+.tag-orange { background:var(--orange-light); color:var(--orange); }
+.tag-gold { background:var(--gold-light); color:var(--gold); }
+
+/* Code Block — light theme */
+.code-block { background:var(--code-bg); border:1px solid var(--code-border); border-radius:var(--radius); padding:16px 20px; margin-top:12px; position:relative; }
+.code-block::before { content:attr(data-label); position:absolute; top:0; right:0; background:var(--primary-light); color:var(--primary); font-size:10px; font-weight:700; padding:2px 10px; border-radius:0 12px 0 8px; }
+.code-block pre { margin:0; overflow-x:auto; max-height:240px; overflow-y:auto; }
+.code-block code { font-family:var(--mono); font-size:12px; line-height:1.7; color:#374151; white-space:pre; }
+.code-block .kw { color:#7c3aed; }
+.code-block .fn { color:#2563eb; }
+.code-block .st { color:#0d9488; }
+.code-block .nu { color:#d97706; }
+.code-block .cm { color:#9ca3af; font-style:italic; }
+.code-block .ty { color:#0891b2; }
+
+/* Formula display */
+.formula-box { background:var(--surface); border:2px solid var(--primary); border-radius:var(--radius); padding:28px 40px; font-size:1.3rem; font-weight:600; color:var(--text); text-align:center; box-shadow:var(--shadow-lg); letter-spacing:0.5px; }
+.formula-box .var-cf { color:var(--primary); }
+.formula-box .var-cb { color:var(--accent); }
+.formula-box .var-hot { color:var(--orange); }
+.formula-box .var-rt { color:var(--accent2); }
+.formula-desc { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
+.formula-desc-item { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--text2); }
+.formula-desc-dot { width:10px; height:10px; border-radius:3px; }
+
+/* Pipeline */
+.pipeline { display:flex; align-items:center; gap:12px; justify-content:center; flex-wrap:wrap; }
+.pipe-node { background:var(--surface); border:2px solid var(--border); border-radius:var(--radius); padding:14px 18px; text-align:center; min-width:110px; transition:all 0.3s; cursor:pointer; box-shadow:var(--shadow); }
+.pipe-node:hover { border-color:var(--primary); }
+.pipe-node.active-node { border-color:var(--accent); background:var(--accent-light); box-shadow:0 0 20px rgba(8,145,178,0.15); }
+.pipe-arrow { font-size:1.3rem; color:var(--text3); }
+.pipe-label { font-size:11px; color:var(--text3); margin-top:2px; }
 
 /* Sliders */
-.weight-sliders {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 20px;
-}
-.weight-slider-group label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 4px;
-  color: var(--text2);
-}
-.weight-slider-group label span.val { color: var(--primary); font-weight: 700; }
-.weight-slider-group input[type=range] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--surface2);
-  outline: none;
-}
-.weight-slider-group input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-.slider-cf::-webkit-slider-thumb { background: var(--primary); }
-.slider-cb::-webkit-slider-thumb { background: var(--accent); }
-.slider-hot::-webkit-slider-thumb { background: var(--orange); }
-.slider-rt::-webkit-slider-thumb { background: var(--accent2); }
+.weight-sliders { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; }
+.weight-slider-group label { display:flex; justify-content:space-between; font-size:13px; margin-bottom:3px; color:var(--text2); }
+.weight-slider-group label span.val { color:var(--primary); font-weight:700; }
+.weight-slider-group input[type=range] { -webkit-appearance:none; width:100%; height:5px; border-radius:3px; background:#e5e7eb; outline:none; }
+.weight-slider-group input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; cursor:pointer; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+.slider-cf::-webkit-slider-thumb { background:var(--primary); }
+.slider-cb::-webkit-slider-thumb { background:var(--accent); }
+.slider-hot::-webkit-slider-thumb { background:var(--orange); }
+.slider-rt::-webkit-slider-thumb { background:var(--accent2); }
+.score-display { display:flex; gap:8px; align-items:flex-end; height:100px; margin-top:12px; }
+.score-bar { flex:1; border-radius:6px 6px 0 0; transition:height 0.5s; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:10px; font-weight:700; color:#fff; }
+.bar-cf { background:linear-gradient(180deg,#4338ca,#818cf8); }
+.bar-cb { background:linear-gradient(180deg,#0891b2,#67e8f9); }
+.bar-hot { background:linear-gradient(180deg,#c2410c,#fb923c); }
+.bar-rt { background:linear-gradient(180deg,#be185d,#f9a8d4); }
 
-/* Score bars */
-.score-display { display: flex; gap: 8px; align-items: flex-end; height: 120px; margin-top: 16px; }
-.score-bar {
-  flex: 1;
-  border-radius: 6px 6px 0 0;
-  position: relative;
-  transition: height 0.5s ease;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
+/* Architecture SVG */
+#arch-svg { width:100%; max-width:900px; }
+#arch-svg .layer { transition:all 0.3s; cursor:pointer; }
+#arch-svg text { font-family:var(--font); }
+
+/* Data Flow Loop */
+.flow-loop { display:grid; grid-template-columns:1fr auto 1fr; grid-template-rows:auto auto auto; gap:0; align-items:center; justify-items:center; width:100%; max-width:860px; margin:0 auto; }
+.flow-loop .fl-row { grid-column:1/-1; display:flex; align-items:center; gap:8px; justify-content:center; padding:6px 0; }
+.flow-loop .fl-col { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.fl-step { background:var(--surface); border:2px solid var(--border); border-radius:var(--radius); padding:10px 16px; font-size:13px; font-weight:600; transition:all 0.5s; box-shadow:var(--shadow); white-space:nowrap; }
+.fl-step.hl { background:var(--primary); color:#fff; border-color:var(--primary); transform:scale(1.06); box-shadow:0 4px 16px rgba(67,56,202,0.3); }
+.fl-arrow { font-size:1.3rem; color:var(--primary); font-weight:700; }
+.fl-arrow-v { font-size:1.3rem; color:var(--accent); font-weight:700; }
+
+/* Metrics */
+.metrics-row { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+.metric-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 24px; text-align:center; min-width:130px; box-shadow:var(--shadow); }
+.metric-value { font-size:2.2rem; font-weight:800; }
+.metric-label { font-size:11px; color:var(--text2); margin-top:2px; }
+
+/* Table */
+.compare-table { width:100%; border-collapse:collapse; }
+.compare-table th { background:#f9fafb; padding:10px 14px; text-align:left; font-size:13px; color:var(--primary); border-bottom:2px solid var(--border); font-weight:700; }
+.compare-table td { padding:10px 14px; font-size:13px; border-bottom:1px solid #f3f4f6; color:var(--text2); }
+.compare-table tr:hover td { background:#f9fafb; }
+
+/* Steps */
+.steps { width:100%; max-width:860px; }
+.step-row { display:flex; align-items:flex-start; gap:14px; margin-bottom:12px; padding:14px; border-radius:var(--radius); background:var(--surface); border-left:3px solid transparent; transition:all 0.3s; box-shadow:var(--shadow); }
+.step-row:hover { border-left-color:var(--primary); }
+.step-num { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--accent)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0; }
+
+/* Particles */
+.cover-particles { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.cover-particle { position:absolute; border-radius:50%; opacity:0.2; animation:float-up linear infinite; }
+@keyframes float-up { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:0.3} 90%{opacity:0.05} 100%{transform:translateY(-10vh) scale(2);opacity:0} }
+
+/* Buttons */
+.btn-primary { background:var(--primary); color:#fff; border:none; padding:8px 24px; border-radius:99px; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.3s; }
+.btn-primary:hover { transform:scale(1.04); box-shadow:0 4px 12px rgba(67,56,202,0.3); }
+.btn-outline { background:var(--surface); color:var(--primary); border:1px solid var(--border); padding:6px 18px; border-radius:99px; font-size:12px; cursor:pointer; transition:all 0.3s; }
+.btn-outline:hover { border-color:var(--primary); }
+
+/* Legend */
+.legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+.legend-item { display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text2); }
+.legend-dot { width:8px; height:8px; border-radius:50%; }
+
+/* TOC */
+.toc-card { cursor:pointer; }
+
+/* Responsive */
+@media (max-width:768px) {
+  .slide { padding:30px 20px; }
+  h1 { font-size:1.6rem; } h2 { font-size:1.3rem; }
+  .card-grid.col2,.card-grid.col3,.card-grid.col4 { grid-template-columns:1fr; }
+  .pipeline { flex-wrap:wrap; }
+  .weight-sliders { grid-template-columns:1fr; }
+  .metrics-row { flex-wrap:wrap; }
 }
-.bar-cf { background: linear-gradient(180deg, #6366f1, #a5b4fc); }
-.bar-cb { background: linear-gradient(180deg, #06b6d4, #67e8f9); }
-.bar-hot { background: linear-gradient(180deg, #f97316, #fdba74); }
-.bar-rt { background: linear-gradient(180deg, #ec4899, #f9a8d4); }
-
-/* ===== Architecture SVG ===== */
-#arch-svg { width: 100%; max-width: 960px; }
-#arch-svg .layer { transition: all 0.4s; cursor: pointer; }
-#arch-svg .layer:hover rect { filter: brightness(0.97); stroke-width:2.5 !important; }
-#arch-svg text { font-family: var(--font); }
-
-/* ===== Data Flow ===== */
-.data-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.flow-step {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 14px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.5s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-.flow-step.highlight { background: var(--primary); color: #fff; transform: scale(1.08); box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
-.flow-arrow { color: var(--primary); font-size: 1.3rem; font-weight: 700; }
-
-/* ===== Metrics ===== */
-.metrics-row { display: flex; gap: 20px; width: 100%; max-width: 900px; justify-content: center; }
-.metric-card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 20px 28px;
-  text-align: center;
-  min-width: 140px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-}
-.metric-value { font-size: 2.5rem; font-weight: 800; }
-.metric-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
-.metric-val-cf { color: var(--primary); }
-.metric-val-cb { color: var(--accent); }
-.metric-val-hot { color: var(--orange); }
-.metric-val-rt { color: var(--accent2); }
-
-/* ===== Cover Particles ===== */
-.cover-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.cover-particle {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.25;
-  animation: float-up linear infinite;
-}
-@keyframes float-up {
-  0% { transform: translateY(100vh) scale(0); opacity: 0; }
-  10% { opacity: 0.35; }
-  90% { opacity: 0.08; }
-  100% { transform: translateY(-10vh) scale(2); opacity: 0; }
-}
-
-/* ===== Comparison Table ===== */
-.compare-table { width: 100%; max-width: 900px; border-collapse: collapse; }
-.compare-table th {
-  background: var(--bg2);
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 13px;
-  color: var(--primary2);
-  border-bottom: 2px solid var(--border);
-  font-weight: 700;
-}
-.compare-table td {
-  padding: 12px 16px;
-  font-size: 13px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text2);
-}
-.compare-table tr:hover td { background: #f8fafc; }
-
-/* ===== Tabs ===== */
-.tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: 99px; padding: 4px; margin-bottom: 24px; }
-.tab {
-  padding: 10px 24px;
-  border-radius: 99px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.3s;
-  color: var(--text2);
-}
-.tab.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
-.tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.6); }
-
-/* ===== Steps ===== */
-.steps { width: 100%; max-width: 900px; }
-.step-row { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; padding: 16px; border-radius: var(--radius); background: var(--surface); border-left: 3px solid transparent; transition: all 0.3s; cursor: default; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
-.step-row:hover { border-left-color: var(--primary); box-shadow: var(--shadow); }
-.step-num {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .slide { padding: 30px 20px; }
-  h1 { font-size: 1.8rem; }
-  h2 { font-size: 1.4rem; }
-  .card-grid.col2,.card-grid.col3,.card-grid.col4 { grid-template-columns: 1fr; }
-  .weight-sliders { grid-template-columns: 1fr; }
-  .engine-pipeline { flex-wrap: wrap; justify-content: center; }
-  .metrics-row { flex-wrap: wrap; }
-}
-
-/* ===== Legend ===== */
-.legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-
-/* ===== Animated Number ===== */
-@keyframes count-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.count-up { animation: count-up 0.6s ease-out; }
-
-/* ===== Clickable TOC cards ===== */
-.toc-card { cursor: pointer; }
-
-/* ===== Inline code ===== */
-code { background: var(--bg2); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--primary2); }
-
-/* ===== Buttons ===== */
-.btn-primary {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  padding: 10px 28px;
-  border-radius: 99px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.25);
-}
-.btn-primary:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(99,102,241,0.4); }
-.btn-outline {
-  background: var(--surface);
-  color: var(--primary);
-  border: 1px solid var(--border);
-  padding: 8px 20px;
-  border-radius: 99px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.btn-outline:hover { border-color: var(--primary); background: #f8fafc; }
 </style>
 </head>
 <body>
 
-<!-- Progress Bar -->
 <div id="progress-bar" style="width:0%"></div>
-
-<!-- Navigation Dots -->
 <div id="nav-dots"></div>
-
-<!-- Navigation Hint -->
 <div id="nav-hint">
-  <span class="nav-key">按 <kbd>&larr;</kbd> <kbd>&rarr;</kbd> 方向键翻页</span>
-  <span class="nav-key">按 <kbd>Space</kbd> 下一张</span>
-  <span class="nav-key" id="page-indicator">1 / 15</span>
+  <span class="nav-key"><kbd>←</kbd> <kbd>→</kbd> 翻页</span>
+  <span class="nav-key"><kbd>Space</kbd> 下一张</span>
+  <span class="nav-key" id="page-indicator">1 / 24</span>
 </div>
 
-<!-- ============ SLIDES ============ -->
 <div id="slides">
 
-<!-- ===== Slide 0: Cover ===== -->
+<!-- ====== 0 Cover ====== -->
 <div class="slide slide-center active" data-slide="0">
   <div class="cover-particles" id="particles"></div>
+  <div class="deco blob blob-1" style="top:-80px;right:-80px;width:350px;height:350px;"></div>
+  <div class="deco blob blob-2" style="bottom:-60px;left:-60px;width:280px;height:280px;"></div>
+  <div class="deco ring ring-lg primary" style="top:-100px;left:-100px;border-color:var(--primary);"></div>
+  <div class="deco ring ring-md accent" style="bottom:-60px;right:10%;border-color:var(--accent);"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d4"></div>
   <div style="position:relative;z-index:1;">
-    <div style="font-size:14px;color:var(--primary);letter-spacing:4px;text-transform:uppercase;margin-bottom:16px;font-weight:600;">本科毕业设计答辩</div>
-    <h1 style="font-size:3.2rem;margin-bottom:12px;">基于 Spring Boot 的<br>电商智能推荐系统的设计与实现</h1>
-    <div style="font-size:1.1rem;color:var(--text2);margin-bottom:40px;">Design and Implementation of E-commerce Intelligent<br>Recommendation System Based on Spring Boot</div>
-    <div style="display:flex;gap:40px;justify-content:center;flex-wrap:wrap;">
-      <div><div style="font-size:12px;color:var(--text2);">答辩人</div><div style="font-weight:700;font-size:1.1rem;">王嘉庆</div></div>
-      <div><div style="font-size:12px;color:var(--text2);">学号</div><div style="font-weight:700;font-size:1.1rem;">202221010534</div></div>
-      <div><div style="font-size:12px;color:var(--text2);">指导老师</div><div style="font-weight:700;font-size:1.1rem;">——</div></div>
+    <div style="font-size:13px;color:var(--primary);letter-spacing:4px;text-transform:uppercase;margin-bottom:14px;font-weight:600;">本科毕业设计答辩</div>
+    <h1 style="font-size:2.8rem;margin-bottom:10px;">基于 Spring Boot 的<br>电商智能推荐系统的设计与实现</h1>
+    <div style="font-size:1rem;color:var(--text2);margin-bottom:36px;">Design and Implementation of E-commerce Intelligent<br>Recommendation System Based on Spring Boot</div>
+    <div style="display:flex;gap:36px;justify-content:center;flex-wrap:wrap;">
+      <div><div style="font-size:11px;color:var(--text3);">答辩人</div><div style="font-weight:700;font-size:1rem;">王嘉庆</div></div>
+      <div><div style="font-size:11px;color:var(--text3);">学号</div><div style="font-weight:700;font-size:1rem;">202221010534</div></div>
+      <div><div style="font-size:11px;color:var(--text3);">指导老师</div><div style="font-weight:700;font-size:1rem;">——</div></div>
     </div>
   </div>
 </div>
 
-<!-- ===== Slide 1: TOC ===== -->
+<!-- ====== 1 TOC ====== -->
 <div class="slide slide-center" data-slide="1">
-  <h2>目录 CONTENTS</h2>
-  <div class="card-grid col2" style="max-width:800px;">
-    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(2)">
-      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">01</div>
-      <div><div style="font-weight:700;">项目背景与意义</div><div style="font-size:12px;color:var(--text2);">研究动机与目标</div></div>
+  <div class="deco dot-grid"></div>
+  <div class="deco corner-tl primary"></div>
+  <div class="deco corner-br primary"></div>
+  <div class="deco deco-icon top-right">📚</div>
+  <h2>目录</h2>
+  <div class="card-grid col2" style="max-width:760px;">
+    <div class="card toc-card" style="display:flex;align-items:center;gap:12px;" onclick="goToSlide(2)">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;flex-shrink:0;">01</div>
+      <div><div style="font-weight:700;font-size:14px;">项目背景与目标</div><div style="font-size:11px;color:var(--text3);">行业痛点 · 研究动机</div></div>
     </div>
-    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(3)">
-      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#06b6d4,#22d3ee);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">02</div>
-      <div><div style="font-weight:700;">技术栈概览</div><div style="font-size:12px;color:var(--text2);">前后端技术选型</div></div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:12px;" onclick="goToSlide(4)">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;flex-shrink:0;">02</div>
+      <div><div style="font-weight:700;font-size:14px;">技术栈与架构</div><div style="font-size:11px;color:var(--text3);">前后端 · 分层设计</div></div>
     </div>
-    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(4)">
-      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#ec4899,#f472b6);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">03</div>
-      <div><div style="font-weight:700;">系统架构设计</div><div style="font-size:12px;color:var(--text2);">分层架构与数据流</div></div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:12px;" onclick="goToSlide(6)">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--accent2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;flex-shrink:0;">03</div>
+      <div><div style="font-weight:700;font-size:14px;">核心推荐算法</div><div style="font-size:11px;color:var(--text3);">四路召回 · 融合公式</div></div>
     </div>
-    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(5)">
-      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f97316,#fb923c);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">04</div>
-      <div><div style="font-weight:700;">核心推荐算法</div><div style="font-size:12px;color:var(--text2);">混合推荐策略 ⭐</div></div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:12px;" onclick="goToSlide(16)">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;flex-shrink:0;">04</div>
+      <div><div style="font-weight:700;font-size:14px;">数据模型与闭环</div><div style="font-size:11px;color:var(--text3);">16张表 · 数据流</div></div>
     </div>
-    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(8)">
-      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">05</div>
-      <div><div style="font-weight:700;">数据模型设计</div><div style="font-size:12px;color:var(--text2);">16张核心表</div></div>
-    </div>
-    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(9)">
-      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#d97706,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">06</div>
-      <div><div style="font-weight:700;">功能模块展示</div><div style="font-size:12px;color:var(--text2);">用户端+管理端</div></div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:12px;" onclick="goToSlide(19)">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem;flex-shrink:0;">05</div>
+      <div><div style="font-weight:700;font-size:14px;">功能 · 评估 · 创新</div><div style="font-size:11px;color:var(--text3);">效果量化 · 对比分析</div></div>
     </div>
   </div>
 </div>
 
-<!-- ===== Slide 2: Background ===== -->
+<!-- ====== 2 Background ====== -->
 <div class="slide slide-center" data-slide="2">
-  <h2>项目背景与意义</h2>
-  <div class="card-grid col2" style="max-width:1000px;">
+  <div class="deco blob blob-3" style="background:var(--accent);"></div>
+  <div class="deco blob blob-sm" style="background:var(--gold);top:10%;right:15%;"></div>
+  <div class="deco deco-icon bottom-left">🏪</div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>项目背景</h2>
+  <div style="max-width:800px;width:100%;">
     <div class="card" style="text-align:left;">
-      <h3>行业背景</h3>
-      <ul style="font-size:14px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
-        <li>电商市场规模持续增长，<b style="color:var(--accent);">信息过载</b>问题日益严重</li>
+      <h3>行业痛点</h3>
+      <ul style="font-size:14px;line-height:2.2;color:var(--text2);padding-left:18px;margin-top:6px;">
+        <li>电商市场持续增长，<b style="color:var(--primary);">信息过载</b>问题日益严重</li>
         <li>用户在海量商品中难以快速找到感兴趣的内容</li>
-        <li>个性化推荐成为电商平台的<b style="color:var(--gold);">核心竞争力</b></li>
-        <li>传统推荐系统多基于单一算法，效果有限</li>
+        <li>传统推荐系统多基于<b style="color:var(--accent2);">单一算法</b>，效果有限</li>
+        <li>新用户<b style="color:var(--orange);">冷启动</b>问题缺乏有效解决方案</li>
+        <li>推荐策略硬编码，无法动态调整</li>
       </ul>
     </div>
-    <div class="card" style="text-align:left;">
-      <h3>研究目标</h3>
-      <ul style="font-size:14px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
-        <li>设计并实现一个完整的<b style="color:var(--accent);">电商智能推荐系统</b></li>
-        <li>融合多种推荐算法，<b style="color:var(--gold);">多路召回+权重融合</b></li>
-        <li>支持<b style="color:var(--primary);">动态配置</b>推荐策略，无需重启</li>
-        <li>解决<b style="color:var(--orange);">冷启动</b>问题，提供兜底策略</li>
-        <li>前后端分离架构，具备实际应用价值</li>
-      </ul>
+    <div class="legend" style="margin-top:16px;">
+      <span class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 协同过滤</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--accent);"></span> 内容推荐</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--orange);"></span> 热度推荐</span>
+      <span class="legend-item"><span class="legend-dot" style="background:var(--accent2);"></span> 实时推荐</span>
     </div>
-  </div>
-  <div class="legend" style="margin-top:20px;">
-    <span class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 协同过滤</span>
-    <span class="legend-item"><span class="legend-dot" style="background:var(--accent);"></span> 内容推荐</span>
-    <span class="legend-item"><span class="legend-dot" style="background:var(--orange);"></span> 热度推荐</span>
-    <span class="legend-item"><span class="legend-dot" style="background:var(--accent2);"></span> 实时推荐</span>
-    <span class="legend-item"><span class="legend-dot" style="background:var(--gold);"></span> 动态权重</span>
   </div>
 </div>
 
-<!-- ===== Slide 3: Tech Stack ===== -->
+<!-- ====== 3 Research Objectives ====== -->
 <div class="slide slide-center" data-slide="3">
-  <h2>技术栈概览</h2>
-  <div class="card-grid col2" style="max-width:1000px;">
+  <div class="deco corner-tl accent"></div>
+  <div class="deco corner-br accent"></div>
+  <div class="deco blob blob-sm" style="background:var(--primary);bottom:10%;right:5%;"></div>
+  <div class="deco ring ring-sm" style="top:15%;right:10%;border-color:var(--accent);"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>研究目标</h2>
+  <div style="max-width:860px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div class="card" style="text-align:left;display:flex;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;">1</div>
+      <div><div style="font-weight:700;font-size:14px;">多路召回 + 动态权重融合</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">四路并行召回，权重可实时调整</div></div>
+    </div>
+    <div class="card" style="text-align:left;display:flex;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;">2</div>
+      <div><div style="font-weight:700;font-size:14px;">智能冷启动处理</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">品类偏好 + 热门兜底策略</div></div>
+    </div>
+    <div class="card" style="text-align:left;display:flex;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--accent2-light);color:var(--accent2);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;">3</div>
+      <div><div style="font-weight:700;font-size:14px;">实时反馈闭环</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">行为异步触发刷新 + 定时离线重建</div></div>
+    </div>
+    <div class="card" style="text-align:left;display:flex;gap:12px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--orange-light);color:var(--orange);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;">4</div>
+      <div><div style="font-weight:700;font-size:14px;">完整工程化实现</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">前后端分离，16张表，82个商品</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 4 Tech Stack ====== -->
+<div class="slide slide-center" data-slide="4">
+  <div class="deco dot-grid"></div>
+  <div class="deco blob blob-1" style="background:var(--accent);opacity:0.08;"></div>
+  <div class="deco blob blob-2" style="background:var(--primary);opacity:0.06;"></div>
+  <div class="deco deco-icon top-right">⚙️</div>
+  <h2>技术栈</h2>
+  <div class="card-grid col2" style="max-width:900px;">
     <div class="card">
-      <h3>后端 Backend</h3>
-      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+      <h3>后端</h3>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
         <span class="tag tag-purple">Spring Boot 3.3.5</span>
         <span class="tag tag-purple">Java 17</span>
-        <span class="tag tag-cyan">MyBatis-Plus 3.5.7</span>
+        <span class="tag tag-cyan">MyBatis-Plus</span>
         <span class="tag tag-cyan">MySQL 8.0</span>
         <span class="tag tag-pink">Redis 7.x</span>
         <span class="tag tag-pink">Spring Security</span>
-        <span class="tag tag-orange">JWT 0.12.6</span>
+        <span class="tag tag-orange">JWT</span>
         <span class="tag tag-green">SpringDoc OpenAPI</span>
-        <span class="tag tag-purple">@Async 异步</span>
-        <span class="tag tag-cyan">@Scheduled 定时</span>
       </div>
     </div>
     <div class="card">
-      <h3>前端 Frontend</h3>
-      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+      <h3>前端</h3>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
         <span class="tag tag-green">Vue 3</span>
         <span class="tag tag-cyan">TypeScript</span>
         <span class="tag tag-purple">Vite</span>
@@ -529,128 +395,592 @@ code { background: var(--bg2); padding: 2px 6px; border-radius: 4px; font-size: 
         <span class="tag tag-orange">Pinia</span>
         <span class="tag tag-cyan">Vue Router 4</span>
         <span class="tag tag-purple">Axios</span>
-        <span class="tag tag-green">SVG 可视化</span>
-        <span class="tag tag-pink">CSS3 动画</span>
-        <span class="tag tag-orange">响应式布局</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>架构模式</h3>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
+        <span class="tag tag-purple">前后端分离</span>
+        <span class="tag tag-cyan">RESTful API</span>
+        <span class="tag tag-green">JWT 无状态认证</span>
+        <span class="tag tag-orange">@Async 异步</span>
+        <span class="tag tag-gold">多路召回融合</span>
       </div>
     </div>
     <div class="card">
       <h3>开发工具</h3>
-      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
         <span class="tag tag-cyan">IntelliJ IDEA</span>
         <span class="tag tag-green">VS Code</span>
         <span class="tag tag-purple">Maven</span>
         <span class="tag tag-orange">Git</span>
         <span class="tag tag-pink">Postman</span>
-        <span class="tag tag-cyan">Docker</span>
-      </div>
-    </div>
-    <div class="card">
-      <h3>架构模式</h3>
-      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
-        <span class="tag tag-purple">前后端分离</span>
-        <span class="tag tag-cyan">RESTful API</span>
-        <span class="tag tag-green">JWT 无状态认证</span>
-        <span class="tag tag-orange">MVC 分层架构</span>
-        <span class="tag tag-pink">异步非阻塞</span>
-        <span class="tag tag-gold">多路召回融合</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== Slide 4: Architecture ===== -->
-<div class="slide slide-center" data-slide="4">
-  <h2>系统架构设计</h2>
-  <svg id="arch-svg" viewBox="0 0 960 450" style="width:100%;max-width:960px;">
-    <g class="layer" onclick="highlightLayer('frontend')" id="layer-frontend">
-      <rect x="40" y="20" width="880" height="65" rx="14" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
-      <text x="480" y="48" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">前端展示层 — Vue 3 + Element Plus + Pinia</text>
-      <text x="480" y="68" text-anchor="middle" fill="#64748b" font-size="11">用户端 (首页/商品/购物车/订单/个人中心) · 管理端 (仪表盘/商品管理/推荐引擎配置)</text>
+<!-- ====== 5 Architecture ====== -->
+<div class="slide slide-center" data-slide="5">
+  <div class="deco dot-grid" style="opacity:0.25;"></div>
+  <div class="deco corner-tl primary"></div>
+  <div class="deco corner-br primary"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>系统架构</h2>
+  <svg id="arch-svg" viewBox="0 0 960 420" style="width:100%;max-width:900px;">
+    <g class="layer" onclick="hl('frontend')" id="l-fe">
+      <rect x="40" y="15" width="880" height="60" rx="12" fill="#eef2ff" stroke="#4338ca" stroke-width="1.5"/>
+      <text x="480" y="42" text-anchor="middle" fill="#111827" font-size="14" font-weight="700">前端展示层 — Vue 3 + Element Plus + Pinia</text>
+      <text x="480" y="60" text-anchor="middle" fill="#6b7280" font-size="11">用户端 · 管理端</text>
     </g>
-    <text x="480" y="111" text-anchor="middle" fill="#6366f1" font-size="18" font-weight="700">↕ RESTful API / JSON / JWT</text>
-    <g class="layer" onclick="highlightLayer('backend')" id="layer-backend">
-      <rect x="40" y="125" width="880" height="65" rx="14" fill="#ecfeff" stroke="#06b6d4" stroke-width="2"/>
-      <text x="480" y="153" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">业务逻辑层 — Spring Boot + Spring Security + MyBatis-Plus</text>
-      <text x="480" y="173" text-anchor="middle" fill="#64748b" font-size="11">认证鉴权 · 商品管理 · 交易订单 · 行为采集 · 推荐引擎 (多路召回+权重融合)</text>
+    <text x="480" y="100" text-anchor="middle" fill="#4338ca" font-size="14" font-weight="600">↕ RESTful API / JWT</text>
+    <g class="layer" onclick="hl('backend')" id="l-be">
+      <rect x="40" y="115" width="880" height="60" rx="12" fill="#ecfeff" stroke="#0891b2" stroke-width="1.5"/>
+      <text x="480" y="142" text-anchor="middle" fill="#111827" font-size="14" font-weight="700">业务逻辑层 — Spring Boot + Security + MyBatis-Plus</text>
+      <text x="480" y="160" text-anchor="middle" fill="#6b7280" font-size="11">认证 · 商品 · 订单 · 行为采集 · 推荐引擎</text>
     </g>
-    <text x="480" y="216" text-anchor="middle" fill="#06b6d4" font-size="18" font-weight="700">↕</text>
-    <g class="layer" onclick="highlightLayer('data')" id="layer-data">
-      <rect x="40" y="230" width="430" height="80" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
-      <text x="255" y="260" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">MySQL 主存储</text>
-      <text x="255" y="280" text-anchor="middle" fill="#64748b" font-size="11">用户 · 商品 · 订单 · 行为 · 推荐结果 · 配置 (16张表)</text>
+    <text x="480" y="200" text-anchor="middle" fill="#6b7280" font-size="14" font-weight="600">↕</text>
+    <g class="layer" onclick="hl('data')" id="l-db">
+      <rect x="40" y="215" width="430" height="75" rx="12" fill="#ecfdf5" stroke="#047857" stroke-width="1.5"/>
+      <text x="255" y="245" text-anchor="middle" fill="#111827" font-size="14" font-weight="700">MySQL 主存储</text>
+      <text x="255" y="265" text-anchor="middle" fill="#6b7280" font-size="11">16 张业务表</text>
     </g>
-    <g class="layer" onclick="highlightLayer('cache')" id="layer-cache">
-      <rect x="490" y="230" width="430" height="80" rx="14" fill="#fdf2f8" stroke="#ec4899" stroke-width="2"/>
-      <text x="705" y="260" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">Redis 缓存层</text>
-      <text x="705" y="280" text-anchor="middle" fill="#64748b" font-size="11">推荐结果缓存(30min) · 相似商品缓存(2-4h) · 用户会话</text>
+    <g class="layer" onclick="hl('cache')" id="l-rc">
+      <rect x="490" y="215" width="430" height="75" rx="12" fill="#fdf2f8" stroke="#be185d" stroke-width="1.5"/>
+      <text x="705" y="245" text-anchor="middle" fill="#111827" font-size="14" font-weight="700">Redis 缓存</text>
+      <text x="705" y="265" text-anchor="middle" fill="#6b7280" font-size="11">推荐结果 30min · 相似商品 2-4h</text>
     </g>
-    <text x="480" y="341" text-anchor="middle" fill="#94a3b8" font-size="18" font-weight="700">↕</text>
-    <g class="layer" onclick="highlightLayer('async')" id="layer-async">
-      <rect x="40" y="355" width="880" height="55" rx="14" fill="#fff7ed" stroke="#f97316" stroke-width="2" stroke-dasharray="6,3"/>
-      <text x="480" y="380" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">异步任务层 — Spring @Async + @Scheduled</text>
-      <text x="480" y="398" text-anchor="middle" fill="#64748b" font-size="11">每天凌晨2点离线全量重建 · 用户行为后异步刷新 · 管理员手动触发重算</text>
+    <text x="480" y="318" text-anchor="middle" fill="#9ca3af" font-size="14" font-weight="600">↕</text>
+    <g class="layer" onclick="hl('async')" id="l-as">
+      <rect x="40" y="335" width="880" height="50" rx="12" fill="#fff7ed" stroke="#c2410c" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="480" y="358" text-anchor="middle" fill="#111827" font-size="14" font-weight="700">异步任务层 — @Async + @Scheduled</text>
+      <text x="480" y="374" text-anchor="middle" fill="#6b7280" font-size="11">凌晨2点全量重建 · 行为后异步刷新 · 手动触发</text>
     </g>
   </svg>
-  <div id="arch-info" style="margin-top:12px;font-size:13px;color:var(--text2);min-height:20px;">点击各层查看详情</div>
+  <div id="arch-info" style="margin-top:10px;font-size:12px;color:var(--text3);min-height:18px;">点击各层查看详情</div>
 </div>
 
-<!-- ===== Slide 5: Core Algorithm ===== -->
-<div class="slide slide-center" data-slide="5">
-  <h2>核心推荐算法 — 混合推荐引擎 ⭐</h2>
-  <div style="width:100%;max-width:1000px;">
-    <div class="engine-pipeline">
-      <div class="pipe-node active-node" data-node="input" onclick="focusPipeline('input')">
-        <div style="font-size:1.5rem;">👤</div>
-        <div style="font-weight:700;font-size:14px;">用户请求</div>
-        <div class="pipe-label">行为数据+画像</div>
+<!-- ====== 6 Algorithm Pipeline ====== -->
+<div class="slide slide-center" data-slide="6">
+  <div class="deco ring ring-lg" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--primary);opacity:0.05;"></div>
+  <div class="deco ring ring-md" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--accent);opacity:0.06;"></div>
+  <div class="deco blob blob-sm" style="background:var(--primary);top:5%;left:5%;"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>推荐算法 — 引擎流水线</h2>
+  <div class="pipeline" style="margin-bottom:24px;">
+    <div class="pipe-node active-node" data-node="input" onclick="focusPipe('input')">
+      <div style="font-size:1.3rem;">👤</div>
+      <div style="font-weight:700;font-size:13px;">用户请求</div>
+      <div class="pipe-label">行为 + 画像</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node" data-node="recall" onclick="focusPipe('recall')">
+      <div style="font-size:1.3rem;">🔍</div>
+      <div style="font-weight:700;font-size:13px;">多路召回</div>
+      <div class="pipe-label">4 路并行</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node" data-node="fusion" onclick="focusPipe('fusion')">
+      <div style="font-size:1.3rem;">⚡</div>
+      <div style="font-weight:700;font-size:13px;">权重融合</div>
+      <div class="pipe-label">归一化 + 加权</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node" data-node="filter" onclick="focusPipe('filter')">
+      <div style="font-size:1.3rem;">🎯</div>
+      <div style="font-weight:700;font-size:13px;">结果过滤</div>
+      <div class="pipe-label">去重 · 去已购</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node" data-node="output" onclick="focusPipe('output')">
+      <div style="font-size:1.3rem;">📦</div>
+      <div style="font-weight:700;font-size:13px;">推荐结果</div>
+      <div class="pipe-label">Top-N</div>
+    </div>
+  </div>
+  <div class="card" style="max-width:860px;text-align:left;font-size:13px;color:var(--text2);line-height:1.8;">
+    <b style="color:var(--text);">四路并行召回：</b>
+    <span style="color:var(--primary);">Item-CF (0.45)</span> ·
+    <span style="color:var(--accent);">Content-Based (0.25)</span> ·
+    <span style="color:var(--orange);">Hot (0.20)</span> ·
+    <span style="color:var(--accent2);">Realtime (0.10)</span><br>
+    各通道独立生成候选集 → Max-Normalization 归一化 → 按可配置权重加权求和 → 过滤排除项 → Top-N 输出
+  </div>
+</div>
+
+<!-- ====== 7 Item-CF: Concept ====== -->
+<div class="slide slide-center" data-slide="7">
+  <div class="deco corner-tl primary"></div>
+  <div class="deco corner-br primary"></div>
+  <div class="deco blob blob-sm" style="background:var(--accent2);top:10%;right:8%;"></div>
+  <div class="deco deco-icon center-right">🔢</div>
+  <div class="deco float-dot d3"></div>
+  <h2>召回策略一：协同过滤 Item-CF</h2>
+  <div style="max-width:800px;width:100%;">
+    <div class="card" style="text-align:left;border-left:3px solid var(--primary);">
+      <h3>核心思想</h3>
+      <p style="font-size:14px;color:var(--text2);line-height:2;margin-top:4px;">
+        <b style="color:var(--text);">喜欢商品A的用户也喜欢商品B</b><br>
+        构建用户-商品行为权重矩阵 → 计算商品间余弦相似度 → 用相似度加权生成候选分
+      </p>
+    </div>
+    <div style="margin-top:20px;">
+      <div class="formula-box">
+        similarity(i, j) = co_occur(i, j) / √( norm<sub>i</sub> × norm<sub>j</sub> )
       </div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node" data-node="recall" onclick="focusPipeline('recall')">
-        <div style="font-size:1.5rem;">🔍</div>
-        <div style="font-weight:700;font-size:14px;">多路召回</div>
-        <div class="pipe-label">4 路并行</div>
-      </div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node" data-node="fusion" onclick="focusPipeline('fusion')">
-        <div style="font-size:1.5rem;">⚡</div>
-        <div style="font-weight:700;font-size:14px;">权重融合</div>
-        <div class="pipe-label">归一化+加权</div>
-      </div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node" data-node="filter" onclick="focusPipeline('filter')">
-        <div style="font-size:1.5rem;">🎯</div>
-        <div style="font-weight:700;font-size:14px;">结果过滤</div>
-        <div class="pipe-label">去重+去已购+去踩</div>
-      </div>
-      <div class="pipe-arrow">→</div>
-      <div class="pipe-node" data-node="output" onclick="focusPipeline('output')">
-        <div style="font-size:1.5rem;">📦</div>
-        <div style="font-weight:700;font-size:14px;">推荐结果</div>
-        <div class="pipe-label">Top-N 商品</div>
+      <div class="formula-desc">
+        <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--primary);"></div> co_occur = Σ(w<sub>left</sub> × w<sub>right</sub>) 同用户交互的商品对</div>
+        <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent);"></div> norm = Σ(w²) 每个商品的行为权重平方和</div>
       </div>
     </div>
+  </div>
+</div>
 
+<!-- ====== 8 Item-CF: Code ====== -->
+<div class="slide slide-center" data-slide="8">
+  <div class="deco dot-grid" style="opacity:0.2;"></div>
+  <div class="deco blob blob-2" style="background:var(--primary);opacity:0.06;"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>Item-CF — 代码实现</h2>
+  <div style="max-width:860px;width:100%;">
+    <div class="code-block" data-label="RecommendService.java">
+      <pre><code><span class="cm">// itemCf() — 用户行为 × 物品相似度 → 候选分数</span>
+<span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; <span class="fn">itemCf</span>(<span class="ty">Long</span> userId) {
+    <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; mine = <span class="fn">loadWeights</span>(userId);   <span class="cm">// 用户历史行为权重</span>
+    <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; scores = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    mine.<span class="fn">forEach</span>((id, w) -&gt;
+        <span class="fn">similarity</span>().<span class="fn">getOrDefault</span>(id, Map.<span class="fn">of</span>())
+            .<span class="fn">forEach</span>((candidate, s) -&gt;
+                scores.<span class="fn">merge</span>(candidate, s * w, Double::sum)));
+    <span class="kw">return</span> scores;
+}
+
+<span class="cm">// similarity() — 余弦相似度矩阵构建</span>
+<span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt;&gt; <span class="fn">similarity</span>() {
+    <span class="cm">// Step 1: 用户-商品行为矩阵</span>
+    <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt;&gt; userMatrix = ...;
+    <span class="cm">// Step 2: 共现矩阵 co(i,j) = Σ(w_i × w_j)</span>
+    userMatrix.<span class="fn">values</span>().<span class="fn">forEach</span>(itemMap -&gt; {
+        itemMap.<span class="fn">forEach</span>((leftId, lw) -&gt;
+            itemMap.<span class="fn">forEach</span>((rightId, rw) -&gt; {
+                <span class="kw">if</span> (!leftId.<span class="fn">equals</span>(rightId))
+                    co.<span class="fn">computeIfAbsent</span>(leftId, k -&gt; <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;())
+                      .<span class="fn">merge</span>(rightId, lw * rw, Double::sum);
+            }));
+    });
+    <span class="cm">// Step 3: 余弦相似度 = co / √(norm_i × norm_j)</span>
+    <span class="kw">double</span> base = Math.<span class="fn">sqrt</span>(norm.<span class="fn">getOrDefault</span>(itemId, <span class="nu">1.0</span>)
+                             * norm.<span class="fn">getOrDefault</span>(otherId, <span class="nu">1.0</span>));
+    inner.<span class="fn">put</span>(otherId, base == <span class="nu">0</span> ? <span class="nu">0</span> : score / base);
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 9 Content-Based: Rules ====== -->
+<div class="slide slide-center" data-slide="9">
+  <div class="deco corner-tl accent"></div>
+  <div class="deco corner-br accent"></div>
+  <div class="deco blob blob-sm" style="background:var(--accent);bottom:8%;left:10%;"></div>
+  <div class="deco ring ring-sm" style="top:20%;left:8%;border-color:var(--accent);"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>召回策略二：基于内容 Content-Based</h2>
+  <div style="max-width:800px;width:100%;">
+    <div class="card" style="text-align:left;border-left:3px solid var(--accent);">
+      <h3>匹配规则</h3>
+      <p style="font-size:14px;color:var(--text2);line-height:2;margin-top:4px;">
+        用户画像（品类偏好 + 品牌偏好 + 兴趣标签）与商品属性逐项匹配打分
+      </p>
+    </div>
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card" style="text-align:center;padding:14px;">
+        <div style="font-size:2rem;font-weight:800;color:var(--primary);">+2.0</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">品类偏好匹配</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px;">
+        <div style="font-size:2rem;font-weight:800;color:var(--accent);">+1.4</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">近期浏览品类</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px;">
+        <div style="font-size:2rem;font-weight:800;color:var(--orange);">+1.0</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">品牌偏好匹配</div>
+      </div>
+      <div class="card" style="text-align:center;padding:14px;">
+        <div style="font-size:2rem;font-weight:800;color:var(--accent2);">+0.5</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">兴趣标签匹配（每条）</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 10 Content-Based: Code ====== -->
+<div class="slide slide-center" data-slide="10">
+  <div class="deco dot-grid" style="opacity:0.2;"></div>
+  <div class="deco blob blob-1" style="background:var(--accent);opacity:0.06;"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d1"></div>
+  <h2>Content-Based — 代码实现</h2>
+  <div style="max-width:860px;width:100%;">
+    <div class="code-block" data-label="RecommendService.java">
+      <pre><code><span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; <span class="fn">content</span>(<span class="ty">Long</span> userId, <span class="ty">List</span>&lt;<span class="ty">ProductEntity</span>&gt; active) {
+    ProfileView profile = userService.<span class="fn">getProfile</span>(userId);
+    <span class="ty">Set</span>&lt;<span class="ty">String</span>&gt; categoryPrefs = <span class="fn">split</span>(profile.<span class="fn">preferredCategories</span>());
+    <span class="ty">Set</span>&lt;<span class="ty">String</span>&gt; brandPrefs = <span class="fn">split</span>(profile.<span class="fn">preferredBrands</span>());
+    <span class="ty">Set</span>&lt;<span class="ty">String</span>&gt; interests = <span class="fn">split</span>(profile.<span class="fn">interests</span>());
+
+    <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; scores = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (ProductEntity product : active) {
+        <span class="kw">double</span> score = <span class="nu">0</span>;
+        <span class="kw">if</span> (categoryPrefs.<span class="fn">contains</span>(category))      score += <span class="nu">2.0</span>;
+        <span class="kw">if</span> (recentCats.<span class="fn">contains</span>(categoryId))      score += <span class="nu">1.4</span>;
+        <span class="kw">if</span> (brandPrefs.<span class="fn">contains</span>(brand))            score += <span class="nu">1.0</span>;
+        <span class="kw">if</span> (recentBrands.<span class="fn">contains</span>(brand))         score += <span class="nu">0.8</span>;
+        <span class="kw">for</span> (String interest : interests) {
+            <span class="kw">if</span> (name.<span class="fn">contains</span>(interest) || desc.<span class="fn">contains</span>(interest)
+                    || tags.<span class="fn">stream</span>().<span class="fn">anyMatch</span>(t -&gt; t.<span class="fn">contains</span>(interest)))
+                score += <span class="nu">0.5</span>;
+        }
+        <span class="kw">if</span> (score &gt; <span class="nu">0</span>) scores.<span class="fn">put</span>(product.<span class="fn">getId</span>(), score);
+    }
+    <span class="kw">return</span> scores;
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 11 Hot: Concept ====== -->
+<div class="slide slide-center" data-slide="11">
+  <div class="deco corner-tl" style="border-color:var(--orange);"></div>
+  <div class="deco corner-br" style="border-color:var(--orange);"></div>
+  <div class="deco blob blob-sm" style="background:var(--orange);top:12%;right:10%;"></div>
+  <div class="deco deco-icon bottom-left">🔥</div>
+  <div class="deco float-dot d4"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>召回策略三：热度推荐 Hot</h2>
+  <div style="max-width:800px;width:100%;">
+    <div class="card" style="text-align:left;border-left:3px solid var(--orange);">
+      <h3>核心逻辑</h3>
+      <p style="font-size:14px;color:var(--text2);line-height:2;margin-top:4px;">
+        近 7 天行为数据按<b style="color:var(--primary);">行为权重</b>累加 → 热度分<br>
+        无行为数据时降级为商品自身 <code>salesCount + recommendScore</code>
+      </p>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="formula-box">
+        hotScore(p) = Σ behaviorWeight &nbsp; (近7天) &nbsp; 或 &nbsp; salesCount + recommendScore
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <span class="tag tag-cyan">浏览 ×1.0</span>
+      <span class="tag tag-green">搜索 ×1.5</span>
+      <span class="tag tag-orange">收藏 ×3.0</span>
+      <span class="tag tag-pink">加购 ×4.0</span>
+      <span class="tag tag-gold">购买 ×5.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 12 Hot: Code ====== -->
+<div class="slide slide-center" data-slide="12">
+  <div class="deco dot-grid" style="opacity:0.2;"></div>
+  <div class="deco blob blob-2" style="background:var(--orange);opacity:0.06;"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>Hot — 代码实现</h2>
+  <div style="max-width:860px;width:100%;">
+    <div class="code-block" data-label="RecommendService.java">
+      <pre><code><span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; <span class="fn">hotScores</span>() {
+    LocalDateTime threshold = LocalDateTime.<span class="fn">now</span>().<span class="fn">minusDays</span>(<span class="nu">7</span>);
+    <span class="ty">List</span>&lt;<span class="ty">UserBehaviorEntity</span>&gt; behaviors = userBehaviorMapper
+        .<span class="fn">selectList</span>(<span class="kw">new</span> LambdaQueryWrapper&lt;&gt;()
+            .<span class="fn">isNotNull</span>(UserBehaviorEntity::getProductId)
+            .<span class="fn">gt</span>(UserBehaviorEntity::getCreatedAt, threshold));
+    <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; scores = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="kw">if</span> (behaviors.<span class="fn">isEmpty</span>()) {
+        <span class="cm">// 系统级冷启动：降级为商品自身分数</span>
+        products.<span class="fn">forEach</span>(item -&gt; scores.<span class="fn">put</span>(item.<span class="fn">getId</span>(),
+            item.<span class="fn">getSalesCount</span>() + item.<span class="fn">getRecommendScore</span>()));
+        <span class="kw">return</span> scores;
+    }
+    <span class="cm">// 正常：按行为权重累加</span>
+    behaviors.<span class="fn">forEach</span>(item -&gt; scores.<span class="fn">merge</span>(
+        item.<span class="fn">getProductId</span>(), item.<span class="fn">getBehaviorWeight</span>(), Double::sum));
+    <span class="kw">return</span> scores;
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 13 Realtime: Concept ====== -->
+<div class="slide slide-center" data-slide="13">
+  <div class="deco corner-tl" style="border-color:var(--accent2);"></div>
+  <div class="deco corner-br" style="border-color:var(--accent2);"></div>
+  <div class="deco blob blob-sm" style="background:var(--accent2);bottom:10%;right:8%;"></div>
+  <div class="deco ring ring-sm" style="top:18%;right:12%;border-color:var(--accent2);"></div>
+  <div class="deco deco-icon top-right">⏱️</div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d3"></div>
+  <h2>召回策略四：实时推荐 Realtime</h2>
+  <div style="max-width:800px;width:100%;">
+    <div class="card" style="text-align:left;border-left:3px solid var(--accent2);">
+      <h3>核心逻辑</h3>
+      <p style="font-size:14px;color:var(--text2);line-height:2;margin-top:4px;">
+        基于用户<b style="color:var(--primary);">最近 5 条正向行为</b>，在同品类商品间扩散推荐<br>
+        引入<b style="color:var(--accent2);">时间衰减因子</b>，越近的行为权重越高，捕捉短期兴趣漂移
+      </p>
+    </div>
+    <div style="margin-top:20px;">
+      <div class="formula-box">
+        decay(i) = 1.0 / (i + 1) &nbsp;&nbsp; → &nbsp;&nbsp; score = 0.8 × decay
+      </div>
+      <div class="formula-desc">
+        <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent2);"></div> i=0 → 1.0（最近）</div>
+        <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent2);"></div> i=1 → 0.5</div>
+        <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent2);"></div> i=2 → 0.33</div>
+        <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent2);"></div> i=3 → 0.25</div>
+        <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent2);"></div> i=4 → 0.20</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 14 Realtime + Cold Start: Code ====== -->
+<div class="slide slide-center" data-slide="14">
+  <div class="deco dot-grid" style="opacity:0.2;"></div>
+  <div class="deco blob blob-1" style="background:var(--accent2);opacity:0.06;"></div>
+  <div class="deco float-dot d5"></div>
+  <div class="deco float-dot d2"></div>
+  <h2>Realtime + Cold Start — 代码实现</h2>
+  <div style="max-width:860px;width:100%;">
+    <div class="code-block" data-label="RecommendService.java">
+      <pre><code><span class="cm">// realtime() — 最近5条行为 × 时间衰减 → 同品类扩散</span>
+<span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; <span class="fn">realtime</span>(<span class="ty">Long</span> userId, <span class="ty">List</span>&lt;<span class="ty">ProductEntity</span>&gt; active) {
+    <span class="ty">List</span>&lt;<span class="ty">UserBehaviorEntity</span>&gt; recent = userBehaviorMapper
+        .<span class="fn">selectList</span>(<span class="kw">new</span> LambdaQueryWrapper&lt;&gt;()
+            .<span class="fn">eq</span>(UserBehaviorEntity::getUserId, userId)
+            .<span class="fn">gt</span>(UserBehaviorEntity::getBehaviorWeight, <span class="nu">0</span>)
+            .<span class="fn">orderByDesc</span>(UserBehaviorEntity::getCreatedAt)
+            .<span class="fn">last</span>(<span class="st">"limit 5"</span>));
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; recent.<span class="fn">size</span>(); i++) {
+        <span class="kw">double</span> decay = <span class="nu">1.0</span> / (i + <span class="nu">1</span>);
+        active.<span class="fn">stream</span>().<span class="fn">filter</span>(item -&gt; sameCategory)
+              .<span class="fn">forEach</span>(item -&gt; scores.<span class="fn">merge</span>(id, <span class="nu">0.8</span> * decay, Double::sum));
+    }
+}
+
+<span class="cm">// coldStart() — 行为 &lt; 5条时自动降级</span>
+<span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; <span class="fn">coldStart</span>(<span class="ty">Long</span> userId, <span class="ty">List</span>&lt;<span class="ty">ProductEntity</span>&gt; active) {
+    <span class="ty">Set</span>&lt;<span class="ty">String</span>&gt; categoryPrefs = <span class="fn">split</span>(userService.<span class="fn">getProfile</span>(userId).<span class="fn">preferredCategories</span>());
+    <span class="kw">for</span> (ProductEntity product : active) {
+        <span class="kw">double</span> base = product.<span class="fn">getSalesCount</span>() + product.<span class="fn">getRecommendScore</span>();
+        <span class="kw">if</span> (categoryPrefs.<span class="fn">contains</span>(<span class="fn">categoryName</span>(product.<span class="fn">getCategoryId</span>())))
+            scores.<span class="fn">put</span>(product.<span class="fn">getId</span>(), base + <span class="nu">10</span>);  <span class="cm">// 品类偏好加分</span>
+    }
+    <span class="kw">return</span> scores.<span class="fn">isEmpty</span>() ? <span class="fn">hotScores</span>() : scores;  <span class="cm">// 兜底</span>
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 15 Fusion Formula ====== -->
+<div class="slide slide-center" data-slide="15">
+  <div class="deco ring ring-lg" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--primary);opacity:0.04;"></div>
+  <div class="deco corner-tl primary"></div>
+  <div class="deco corner-br primary"></div>
+  <div class="deco blob blob-sm" style="background:var(--accent);top:8%;left:12%;"></div>
+  <div class="deco blob blob-sm" style="background:var(--accent2);bottom:8%;right:10%;"></div>
+  <div class="deco deco-icon center-right">⚖️</div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>核心融合公式</h2>
+  <div style="max-width:860px;width:100%;">
+    <div class="formula-box" style="font-size:1.1rem;line-height:2;">
+      final_score = <span class="var-cf">w₁</span> × norm(Item-CF) + <span class="var-cb">w₂</span> × norm(Content) + <span class="var-hot">w₃</span> × norm(Hot) + <span class="var-rt">w₄</span> × norm(Realtime)
+    </div>
+    <div class="formula-desc" style="margin-top:20px;">
+      <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--primary);"></div> <span class="var-cf">w₁ = 0.45</span> 协同过滤</div>
+      <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent);"></div> <span class="var-cb">w₂ = 0.25</span> 基于内容</div>
+      <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--orange);"></div> <span class="var-hot">w₃ = 0.20</span> 热度推荐</div>
+      <div class="formula-desc-item"><div class="formula-desc-dot" style="background:var(--accent2);"></div> <span class="var-rt">w₄ = 0.10</span> 实时推荐</div>
+    </div>
+    <div style="margin-top:24px;">
+      <div class="code-block" data-label="融合引擎">
+        <pre><code><span class="cm">// merge() — 四路加权融合</span>
+<span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; <span class="fn">merge</span>(<span class="ty">Map</span> a, <span class="kw">double</span> wa, <span class="ty">Map</span> b, <span class="kw">double</span> wb, <span class="ty">Map</span> c, <span class="kw">double</span> wc, <span class="ty">Map</span> d, <span class="kw">double</span> wd) {
+    <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; result = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    a.<span class="fn">forEach</span>((id, s) -&gt; result.<span class="fn">merge</span>(id, s * wa, Double::sum));
+    b.<span class="fn">forEach</span>((id, s) -&gt; result.<span class="fn">merge</span>(id, s * wb, Double::sum));
+    c.<span class="fn">forEach</span>((id, s) -&gt; result.<span class="fn">merge</span>(id, s * wc, Double::sum));
+    d.<span class="fn">forEach</span>((id, s) -&gt; result.<span class="fn">merge</span>(id, s * wd, Double::sum));
+    <span class="kw">return</span> result;
+}
+
+<span class="cm">// normalize() — Max-Normalization</span>
+<span class="kw">private</span> <span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; <span class="fn">normalize</span>(<span class="ty">Map</span>&lt;<span class="ty">Long</span>, <span class="ty">Double</span>&gt; raw) {
+    <span class="kw">double</span> max = raw.<span class="fn">values</span>().<span class="fn">stream</span>().<span class="fn">mapToDouble</span>(Double::doubleValue).<span class="fn">max</span>().<span class="fn">orElse</span>(<span class="nu">1.0</span>);
+    <span class="kw">return</span> raw.<span class="fn">entrySet</span>().<span class="fn">stream</span>()
+        .<span class="fn">collect</span>(Collectors.<span class="fn">toMap</span>(Map.Entry::getKey, e -&gt; e.<span class="fn">getValue</span>() / max));
+}</code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 16 Data Model ====== -->
+<div class="slide slide-center" data-slide="16">
+  <div class="deco dot-grid" style="opacity:0.25;"></div>
+  <div class="deco blob blob-2" style="background:var(--green);opacity:0.06;"></div>
+  <div class="deco deco-icon top-right">🗄️</div>
+  <div class="deco corner-tl" style="border-color:var(--green);"></div>
+  <div class="deco corner-br" style="border-color:var(--green);"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>数据模型</h2>
+  <div style="width:100%;max-width:1000px;">
+    <div class="card-grid col4" style="margin-bottom:14px;">
+      <div class="card" style="text-align:center;padding:16px;">
+        <div style="font-size:1.6rem;">👤</div>
+        <div style="font-weight:700;font-size:13px;">用户模块</div>
+        <div style="font-size:11px;color:var(--text3);">user · user_profile<br>admin_user</div>
+      </div>
+      <div class="card" style="text-align:center;padding:16px;">
+        <div style="font-size:1.6rem;">📦</div>
+        <div style="font-weight:700;font-size:13px;">商品模块</div>
+        <div style="font-size:11px;color:var(--text3);">product · category<br>product_tag</div>
+      </div>
+      <div class="card" style="text-align:center;padding:16px;">
+        <div style="font-size:1.6rem;">🛒</div>
+        <div style="font-weight:700;font-size:13px;">交易模块</div>
+        <div style="font-size:11px;color:var(--text3);">cart · favorite<br>orders · order_item</div>
+      </div>
+      <div class="card" style="text-align:center;padding:16px;">
+        <div style="font-size:1.6rem;">🧠</div>
+        <div style="font-weight:700;font-size:13px;">推荐模块</div>
+        <div style="font-size:11px;color:var(--text3);">behavior · recommend_*<br>config</div>
+      </div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <h3 style="text-align:center;">用户行为权重体系</h3>
+      <table class="compare-table" style="margin-top:6px;">
+        <thead><tr><th>VIEW</th><th>CLICK</th><th>SEARCH</th><th>FAVORITE</th><th>CART</th><th>PURCHASE</th><th>REC_CLICK</th><th>DISLIKE</th></tr></thead>
+        <tbody><tr style="text-align:center;">
+          <td><span class="tag tag-cyan">1.0</span></td>
+          <td><span class="tag tag-green">2.0</span></td>
+          <td><span class="tag tag-purple">1.5</span></td>
+          <td><span class="tag tag-orange">3.0</span></td>
+          <td><span class="tag tag-pink">4.0</span></td>
+          <td><span class="tag tag-gold">5.0</span></td>
+          <td><span class="tag tag-purple">3.0</span></td>
+          <td style="color:var(--accent2);font-weight:700;">-3.0</td>
+        </tr></tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">16 张表 · 9 大品类 · 82 个商品 · 完整用户画像</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 17 Data Flow Loop ====== -->
+<div class="slide slide-center" data-slide="17">
+  <div class="deco ring ring-lg" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--accent);opacity:0.05;"></div>
+  <div class="deco ring ring-md" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--primary);opacity:0.04;"></div>
+  <div class="deco blob blob-sm" style="background:var(--primary);top:5%;right:8%;"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>数据流闭环</h2>
+  <div style="width:100%;max-width:860px;">
+    <div class="flow-loop" id="data-flow-loop">
+      <div class="fl-row">
+        <div class="fl-step" data-flow="0">👤 用户行为采集</div>
+        <div class="fl-arrow">→</div>
+        <div class="fl-step" data-flow="1">📊 行为数据入库</div>
+        <div class="fl-arrow">→</div>
+        <div class="fl-step" data-flow="2">🔄 异步触发刷新</div>
+      </div>
+      <div class="fl-col"><div class="fl-arrow-v">↓</div></div>
+      <div style="text-align:center;"><div style="font-size:1.6rem;">🔄</div><div style="font-size:10px;color:var(--text3);font-weight:600;">持续迭代</div></div>
+      <div class="fl-col"><div class="fl-arrow-v">↓</div></div>
+      <div class="fl-row" style="justify-content:space-between;max-width:500px;width:100%;">
+        <div class="fl-step" data-flow="6" style="border-color:var(--accent2);">💬 用户反馈</div>
+        <div style="width:60px;"></div>
+        <div class="fl-step" data-flow="3" style="border-color:var(--primary);">🧠 推荐引擎计算</div>
+      </div>
+      <div class="fl-col"><div class="fl-arrow-v" style="color:var(--accent2);">↑</div></div>
+      <div style="text-align:center;"><div style="font-size:10px;color:var(--accent2);font-weight:600;">反馈回流</div></div>
+      <div class="fl-col"><div class="fl-arrow-v">↓</div></div>
+      <div class="fl-row">
+        <div class="fl-step" data-flow="5">📱 前端展示推荐</div>
+        <div class="fl-arrow">←</div>
+        <div class="fl-step" data-flow="4">⚡ Redis 缓存</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin:14px 0;">
+      <button class="btn-outline" onclick="animateFlowLoop()">▶ 播放闭环动画</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 18 Flow Detail ====== -->
+<div class="slide slide-center" data-slide="18">
+  <div class="deco blob blob-3" style="background:var(--accent2);opacity:0.06;"></div>
+  <div class="deco corner-tl accent"></div>
+  <div class="deco corner-br accent"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>闭环机制详解</h2>
+  <div style="max-width:800px;width:100%;">
+    <div class="card" style="text-align:left;font-size:14px;color:var(--text2);line-height:2.2;">
+      <p>用户的每一次行为（浏览 / 搜索 / 收藏 / 加购 / 购买 / 反馈）都会被<b style="color:var(--primary);">实时采集入库</b></p>
+      <p>通过 <code>@Async("recommendExecutor")</code> <b style="color:var(--accent);">异步触发</b>推荐引擎重新计算，不阻塞用户请求</p>
+      <p>计算结果写入 <b style="color:var(--accent2);">Redis 缓存</b>（TTL 30min）并持久化到数据库</p>
+      <p>前端展示推荐后，用户的点击 / 喜欢 / 不喜欢<b style="color:var(--orange);">再次进入行为采集</b>，形成闭环</p>
+      <p>同时 <code>@Scheduled(cron = "0 0 2 * * ?")</code> 每天凌晨<b style="color:var(--green);">全量离线重建</b>，确保数据一致性</p>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;">
+      <span class="tag tag-purple">@Async 异步刷新</span>
+      <span class="tag tag-orange">@Scheduled 离线重建</span>
+      <span class="tag tag-pink">Redis 缓存</span>
+      <span class="tag tag-green">手动触发重算</span>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 19 Weight Slider ====== -->
+<div class="slide slide-center" data-slide="19">
+  <div class="deco ring ring-lg" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--primary);opacity:0.04;"></div>
+  <div class="deco blob blob-sm" style="background:var(--accent);top:8%;right:10%;"></div>
+  <div class="deco blob blob-sm" style="background:var(--orange);bottom:8%;left:8%;"></div>
+  <div class="deco deco-icon top-right">🎛️</div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d3"></div>
+  <h2>动态权重配置</h2>
+  <div style="width:100%;max-width:800px;">
     <div class="card" style="text-align:left;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-weight:700;">动态权重配置（拖拽调节，实时预览融合效果）</span>
-        <span style="font-size:12px;color:var(--text2);" id="weight-sum">总和：1.00</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-weight:700;font-size:14px;">拖拽调节，实时预览</span>
+        <span style="font-size:12px;color:var(--text3);" id="weight-sum">总和：1.00</span>
       </div>
       <div class="weight-sliders">
         <div class="weight-slider-group">
-          <label>协同过滤 (Item-CF) <span class="val" id="val-cf">0.45</span></label>
+          <label>协同过滤 <span class="val" id="val-cf">0.45</span></label>
           <input type="range" class="slider-cf" id="slider-cf" min="0" max="1" step="0.01" value="0.45" oninput="updateWeights()">
         </div>
         <div class="weight-slider-group">
-          <label>基于内容 (Content-Based) <span class="val" id="val-cb">0.25</span></label>
+          <label>基于内容 <span class="val" id="val-cb">0.25</span></label>
           <input type="range" class="slider-cb" id="slider-cb" min="0" max="1" step="0.01" value="0.25" oninput="updateWeights()">
         </div>
         <div class="weight-slider-group">
-          <label>热度推荐 (Hot) <span class="val" id="val-hot">0.20</span></label>
+          <label>热度推荐 <span class="val" id="val-hot">0.20</span></label>
           <input type="range" class="slider-hot" id="slider-hot" min="0" max="1" step="0.01" value="0.20" oninput="updateWeights()">
         </div>
         <div class="weight-slider-group">
-          <label>实时推荐 (Realtime) <span class="val" id="val-rt">0.10</span></label>
+          <label>实时推荐 <span class="val" id="val-rt">0.10</span></label>
           <input type="range" class="slider-rt" id="slider-rt" min="0" max="1" step="0.01" value="0.10" oninput="updateWeights()">
         </div>
       </div>
@@ -660,644 +990,357 @@ code { background: var(--bg2); padding: 2px 6px; border-radius: 4px; font-size: 
         <div class="score-bar bar-hot" id="bar-hot" style="height:40px;">Hot</div>
         <div class="score-bar bar-rt" id="bar-rt" style="height:20px;">RT</div>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;">
-        融合公式：final_score = <b style="color:var(--primary);">w₁×norm(Item-CF)</b> + <b style="color:var(--accent);">w₂×norm(Content)</b> + <b style="color:var(--orange);">w₃×norm(Hot)</b> + <b style="color:var(--accent2);">w₄×norm(Realtime)</b>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center;">
+        权重存储在 <code>recommend_config</code> 表，通过管理后台 API 实时修改，无需重启
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===== Slide 6: Algorithm Details ===== -->
-<div class="slide slide-center" data-slide="6">
-  <h2>四路召回策略详解</h2>
-  <div class="card-grid col2" style="max-width:1100px;">
-    <div class="card" style="text-align:left;border-left:4px solid var(--primary);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">1. 协同过滤 Item-CF</h3>
-        <span class="tag tag-purple">权重 0.45</span>
-      </div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
-        基于用户行为矩阵计算商品间<b style="color:var(--accent);">余弦相似度</b>。<br>
-        构建用户-商品行为权重矩阵，利用向量点积计算共现度。<br>
-        <code>similarity(i, j) = co_occur / √(norm_i × norm_j)</code>
-      </p>
+<!-- ====== 20 Features ====== -->
+<div class="slide slide-center" data-slide="20">
+  <div class="deco dot-grid"></div>
+  <div class="deco blob blob-1" style="background:var(--green);opacity:0.06;"></div>
+  <div class="deco blob blob-2" style="background:var(--accent);opacity:0.05;"></div>
+  <div class="deco corner-tl" style="border-color:var(--green);"></div>
+  <div class="deco corner-br" style="border-color:var(--green);"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>功能模块</h2>
+  <div class="card-grid col3" style="max-width:1000px;">
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.6rem;">🏠</div>
+      <div style="font-weight:700;font-size:14px;">首页推荐</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">Hero轮播 · 分类Tab · 商品网格</div>
     </div>
-    <div class="card" style="text-align:left;border-left:4px solid var(--accent);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">2. 基于内容 Content-Based</h3>
-        <span class="tag tag-cyan">权重 0.25</span>
-      </div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
-        用户画像 (品类偏好+品牌+兴趣标签) 与商品属性<b style="color:var(--accent);">匹配打分</b>。<br>
-        品类匹配 <b>+2.0</b> | 近期浏览品类 <b>+1.4</b> | 品牌匹配 <b>+1.0</b> | 兴趣标签 <b>+0.5/条</b>
-      </p>
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.6rem;">🔍</div>
+      <div style="font-weight:700;font-size:14px;">商品浏览</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">分类筛选 · 搜索 · 排序 · 相似推荐</div>
     </div>
-    <div class="card" style="text-align:left;border-left:4px solid var(--orange);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">3. 热度推荐 Hot</h3>
-        <span class="tag tag-orange">权重 0.20</span>
-      </div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
-        近7天行为数据按<b style="color:var(--accent);">行为权重</b>累加→热度分。<br>
-        浏览×1.0 | 搜索×1.5 | 收藏×3.0 | 加购×4.0 | 购买×5.0<br>
-        融合商品自身销量分+推荐分。
-      </p>
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.6rem;">🛒</div>
+      <div style="font-weight:700;font-size:14px;">购物交易</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">购物车 · 收藏 · 订单状态机</div>
     </div>
-    <div class="card" style="text-align:left;border-left:4px solid var(--accent2);">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;">4. 实时推荐 Realtime</h3>
-        <span class="tag tag-pink">权重 0.10</span>
-      </div>
-      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
-        基于用户<b style="color:var(--accent);">最近5条行为</b>，同品类扩散推荐。<br>
-        引入<b style="color:var(--accent2);">时间衰减因子</b> decay = 1/(i+1)。<br>
-        捕捉用户<b style="color:var(--gold);">短期兴趣漂移</b>。
-      </p>
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.6rem;">👤</div>
+      <div style="font-weight:700;font-size:14px;">画像管理</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">兴趣标签 · 品牌偏好 · 影响推荐</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.6rem;">💬</div>
+      <div style="font-weight:700;font-size:14px;">反馈机制</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">喜欢/不喜欢 · 负反馈自动排除</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px;">
+      <div style="font-size:1.6rem;">⚙️</div>
+      <div style="font-weight:700;font-size:14px;">管理后台</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">仪表盘 · 商品管理 · 引擎配置</div>
     </div>
   </div>
 </div>
 
-<!-- ===== Slide 7: Cold Start & Optimization ===== -->
-<div class="slide slide-center" data-slide="7">
-  <h2>冷启动处理 & 性能优化</h2>
-  <div class="card-grid col2" style="max-width:1000px;">
-    <div class="card" style="text-align:left;">
-      <h3>冷启动策略</h3>
-      <div style="font-size:13px;line-height:1.8;color:var(--text2);margin-top:8px;">
-        <p>当用户行为数据 &lt; <b style="color:var(--accent);">cold-start-threshold (默认5条)</b> 时：</p>
-        <ul style="padding-left:20px;margin-top:8px;">
-          <li>跳过 Item-CF（缺少足够行为数据）</li>
-          <li>基于用户画像中的<b style="color:var(--accent);">品类偏好</b>推荐</li>
-          <li>融合商品<b style="color:var(--orange);">销量分+推荐分</b></li>
-          <li>热门兜底策略，确保新用户也能获得合理推荐</li>
-        </ul>
-        <p style="margin-top:8px;background:var(--bg2);padding:10px 14px;border-radius:8px;font-size:13px;">
-          示例数据：赵子航（Frank）行为数据较少，专门用于<b style="color:var(--accent);">冷启动效果验证</b>
-        </p>
-      </div>
-    </div>
-    <div class="card" style="text-align:left;">
-      <h3>性能优化措施</h3>
-      <div style="font-size:13px;line-height:2.2;color:var(--text2);margin-top:8px;">
-        <ul style="padding-left:20px;">
-          <li><span class="tag tag-pink" style="font-size:11px;">Redis</span> 推荐结果缓存30min，相似商品缓存2-4h</li>
-          <li><span class="tag tag-purple" style="font-size:11px;">@Async</span> 用户行为后异步刷新，不阻塞响应</li>
-          <li><span class="tag tag-orange" style="font-size:11px;">@Scheduled</span> 每天凌晨2点离线全量重建</li>
-          <li><span class="tag tag-cyan" style="font-size:11px;">过滤链</span> 自动排除已购买+显式不喜欢的商品</li>
-          <li><span class="tag tag-green" style="font-size:11px;">归一化</span> 各通道 Max-Normalization 消除量纲差异</li>
-          <li><span class="tag tag-gold" style="font-size:11px;">动态配置</span> 权重可实时调整，无需重启服务</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Slide 8: Data Model ===== -->
-<div class="slide slide-center" data-slide="8">
-  <h2>数据模型设计</h2>
-  <div style="width:100%;max-width:1100px;">
-    <div class="card-grid col4" style="margin-bottom:16px;">
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">👤</div>
-        <div style="font-weight:700;font-size:14px;">用户模块</div>
-        <div style="font-size:12px;color:var(--text2);">user · user_profile<br>admin_user</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">📦</div>
-        <div style="font-weight:700;font-size:14px;">商品模块</div>
-        <div style="font-size:12px;color:var(--text2);">product · category<br>product_tag</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">🛒</div>
-        <div style="font-weight:700;font-size:14px;">交易模块</div>
-        <div style="font-size:12px;color:var(--text2);">cart_item · favorite<br>orders · order_item</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">🧠</div>
-        <div style="font-weight:700;font-size:14px;">推荐模块</div>
-        <div style="font-size:12px;color:var(--text2);">user_behavior · recommend_*<br>recommend_config</div>
-      </div>
-    </div>
-
-    <div class="card" style="text-align:left;">
-      <h3 style="text-align:center;">用户行为权重体系（<code>user_behavior</code> — 核心数据源）</h3>
-      <table class="compare-table" style="margin-top:8px;">
-        <thead>
-          <tr><th>行为类型</th><th>VIEW</th><th>CLICK</th><th>SEARCH</th><th>FAVORITE</th><th>CART</th><th>PURCHASE</th><th>REC_CLICK</th><th>DISLIKE</th></tr>
-        </thead>
-        <tbody>
-          <tr style="text-align:center;">
-            <td style="font-weight:700;">权重值</td>
-            <td><span class="tag tag-cyan">1.0</span></td>
-            <td><span class="tag tag-green">2.0</span></td>
-            <td><span class="tag tag-purple">1.5</span></td>
-            <td><span class="tag tag-orange">3.0</span></td>
-            <td><span class="tag tag-pink">4.0</span></td>
-            <td><span class="tag tag-gold">5.0</span></td>
-            <td><span class="tag tag-purple">3.0</span></td>
-            <td><span class="tag tag-red">-3.0</span></td>
-          </tr>
-        </tbody>
-      </table>
-      <div style="font-size:11px;color:var(--text2);margin-top:8px;text-align:center;">
-        16 张核心表 · 9 大商品品类 · 82 个初始商品 · 模拟用户含完整画像（年龄/城市/职业/兴趣/品牌偏好）
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Slide 9: Features ===== -->
-<div class="slide slide-center" data-slide="9">
-  <h2>功能模块展示</h2>
-  <div class="tabs" id="feature-tabs">
-    <div class="tab active" onclick="switchFeatureTab('user')">👤 用户端功能</div>
-    <div class="tab" onclick="switchFeatureTab('admin')">⚙️ 管理端功能</div>
-  </div>
-  <div id="feature-content-user">
-    <div class="card-grid col3" style="max-width:1100px;">
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">🏠</div>
-        <div style="font-weight:700;">首页个性化推荐</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">Hero轮播 · 分类Tab · 推荐可视化图表 · 商品网格 · 旋转机制</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">🔍</div>
-        <div style="font-weight:700;">商品浏览与搜索</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">分类筛选 · 关键词搜索 · 价格/销量排序 · 分页 · 相似推荐</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">🛒</div>
-        <div style="font-weight:700;">购物交易流程</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">购物车 · 收藏 · 立即购买 · 订单状态追踪 · 完整订单状态机</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">👤</div>
-        <div style="font-weight:700;">个人画像管理</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">兴趣标签编辑 · 品牌偏好 · 品类偏好 · 直接影响推荐结果</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">💬</div>
-        <div style="font-weight:700;">推荐反馈机制</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">喜欢/不喜欢标记 · 负反馈自动排除 · 反馈进入下一次计算循环</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">🔐</div>
-        <div style="font-weight:700;">认证与安全</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">JWT 登录 · 24h过期 · Spring Security · 无状态会话</div>
-      </div>
-    </div>
-  </div>
-  <div id="feature-content-admin" style="display:none;">
-    <div class="card-grid col3" style="max-width:1100px;">
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">📊</div>
-        <div style="font-weight:700;">系统仪表盘</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">用户/商品/订单总量 · 推荐效果指标(CTR/ATC/CVR) · 最近行为列表</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">📦</div>
-        <div style="font-weight:700;">商品管理</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">商品CRUD · 标签管理 · 分类管理 · 销量/推荐分设置</div>
-      </div>
-      <div class="card" style="text-align:center;">
-        <div style="font-size:2rem;">🧠</div>
-        <div style="font-weight:700;">推荐引擎配置 ⭐</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:4px;">四路权重实时调整 · 离线重算一键触发 · 任务日志查看 · 耗时统计</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Slide 10: System Metrics ===== -->
-<div class="slide slide-center" data-slide="10">
-  <h2>推荐效果评估指标</h2>
+<!-- ====== 21 Metrics ====== -->
+<div class="slide slide-center" data-slide="21">
+  <div class="deco ring ring-lg" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--primary);opacity:0.04;"></div>
+  <div class="deco blob blob-sm" style="background:var(--primary);top:10%;left:8%;"></div>
+  <div class="deco blob blob-sm" style="background:var(--accent);bottom:10%;right:8%;"></div>
+  <div class="deco deco-icon center-right">📊</div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>推荐效果评估</h2>
   <div class="metrics-row">
     <div class="metric-card">
-      <div class="metric-value metric-val-cf count-up" data-target="18.7">0%</div>
-      <div class="metric-label">点击率 CTR (%)</div>
-      <div style="font-size:10px;color:var(--text2);">推荐点击 / 推荐曝光</div>
+      <div class="metric-value count-up" data-target="18.7" style="color:var(--primary);">0%</div>
+      <div class="metric-label">点击率 CTR</div>
+      <div style="font-size:10px;color:var(--text3);">点击 / 曝光</div>
     </div>
     <div class="metric-card">
-      <div class="metric-value metric-val-cb count-up" data-target="8.2">0%</div>
-      <div class="metric-label">加购率 ATC (%)</div>
-      <div style="font-size:10px;color:var(--text2);">加购行为 / 推荐曝光</div>
+      <div class="metric-value count-up" data-target="8.2" style="color:var(--accent);">0%</div>
+      <div class="metric-label">加购率 ATC</div>
+      <div style="font-size:10px;color:var(--text3);">加购 / 曝光</div>
     </div>
     <div class="metric-card">
-      <div class="metric-value metric-val-hot count-up" data-target="3.5">0%</div>
-      <div class="metric-label">购买率 CVR (%)</div>
-      <div style="font-size:10px;color:var(--text2);">购买行为 / 推荐曝光</div>
+      <div class="metric-value count-up" data-target="3.5" style="color:var(--orange);">0%</div>
+      <div class="metric-label">购买率 CVR</div>
+      <div style="font-size:10px;color:var(--text3);">购买 / 曝光</div>
     </div>
     <div class="metric-card">
-      <div class="metric-value metric-val-rt count-up" data-target="78.4">0%</div>
-      <div class="metric-label">覆盖率 (%)</div>
-      <div style="font-size:10px;color:var(--text2);">被推荐商品 / 总商品数</div>
+      <div class="metric-value count-up" data-target="78.4" style="color:var(--green);">0%</div>
+      <div class="metric-label">覆盖率</div>
+      <div style="font-size:10px;color:var(--text3);">被推荐 / 总商品</div>
     </div>
     <div class="metric-card">
-      <div class="metric-value" style="color:var(--gold);" data-target="92.1">0%</div>
-      <div class="metric-label">命中率 (%)</div>
-      <div style="font-size:10px;color:var(--text2);">(推荐点击-负反馈) / 曝光</div>
+      <div class="metric-value count-up" data-target="92.1" style="color:var(--gold);">0%</div>
+      <div class="metric-label">命中率</div>
+      <div style="font-size:10px;color:var(--text3);">(点击-负反馈) / 曝光</div>
     </div>
   </div>
-  <div style="margin-top:20px;text-align:center;">
-    <button class="btn-primary" onclick="animateMetrics()">🔄 点击刷新指标动画</button>
+  <div style="margin-top:16px;">
+    <button class="btn-primary" onclick="animateMetrics()">刷新动画</button>
   </div>
 </div>
 
-<!-- ===== Slide 11: Data Flow ===== -->
-<div class="slide slide-center" data-slide="11">
-  <h2>推荐系统数据流闭环</h2>
-  <div style="width:100%;max-width:1000px;">
-    <div class="data-flow" style="margin-bottom:24px;" id="data-flow-anim">
-      <div class="flow-step" data-flow="0">👤 用户行为采集</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step" data-flow="1">📊 行为数据入库</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step" data-flow="2">🔄 异步触发刷新</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step" data-flow="3">🧠 推荐引擎计算</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step" data-flow="4">⚡ Redis 缓存</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step" data-flow="5">📱 前端展示推荐</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step" data-flow="6">💬 用户反馈</div>
-    </div>
-    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:24px;">
-      <button class="btn-outline" onclick="animateFlow()">▶ 播放数据流动画</button>
-    </div>
-
-    <h3 style="text-align:center;">传统推荐 vs 本系统</h3>
-    <table class="compare-table" style="margin-top:8px;">
-      <thead>
-        <tr><th>对比维度</th><th>传统单一算法</th><th style="color:var(--primary);">本系统（混合推荐）</th></tr>
-      </thead>
+<!-- ====== 22 Comparison ====== -->
+<div class="slide slide-center" data-slide="22">
+  <div class="deco blob blob-3" style="background:var(--primary);opacity:0.05;"></div>
+  <div class="deco corner-tl primary"></div>
+  <div class="deco corner-br primary"></div>
+  <div class="deco deco-icon top-right">⚔️</div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
+  <h2>传统推荐 vs 本系统</h2>
+  <div style="width:100%;max-width:800px;">
+    <table class="compare-table">
+      <thead><tr><th>维度</th><th>传统单一算法</th><th style="color:var(--primary);">本系统</th></tr></thead>
       <tbody>
-        <tr><td>召回策略</td><td>单路召回</td><td style="color:var(--primary);font-weight:700;">四路并行召回</td></tr>
-        <tr><td>冷启动</td><td>效果差，无兜底</td><td style="color:var(--primary);font-weight:700;">品类偏好+热门兜底</td></tr>
-        <tr><td>权重调整</td><td>硬编码，需重启</td><td style="color:var(--primary);font-weight:700;">后台实时动态配置</td></tr>
-        <tr><td>实时性</td><td>离线批量计算</td><td style="color:var(--primary);font-weight:700;">近实时异步刷新</td></tr>
-        <tr><td>反馈闭环</td><td>无反馈机制</td><td style="color:var(--primary);font-weight:700;">喜欢/不喜欢自动学习</td></tr>
-        <tr><td>推荐覆盖率</td><td>偏向热门头部</td><td style="color:var(--primary);font-weight:700;">兼顾长尾商品 (~78%)</td></tr>
+        <tr><td>召回策略</td><td>单路召回</td><td style="color:var(--primary);font-weight:700;">四路并行</td></tr>
+        <tr><td>冷启动</td><td>无兜底</td><td style="color:var(--primary);font-weight:700;">品类偏好 + 热门兜底</td></tr>
+        <tr><td>权重调整</td><td>硬编码，需重启</td><td style="color:var(--primary);font-weight:700;">后台实时配置</td></tr>
+        <tr><td>实时性</td><td>离线批量</td><td style="color:var(--primary);font-weight:700;">近实时异步刷新</td></tr>
+        <tr><td>反馈闭环</td><td>无</td><td style="color:var(--primary);font-weight:700;">喜欢/不喜欢自动学习</td></tr>
+        <tr><td>覆盖率</td><td>偏向头部</td><td style="color:var(--primary);font-weight:700;">兼顾长尾 (~78%)</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- ===== Slide 12: Innovation Points ===== -->
-<div class="slide slide-center" data-slide="12">
-  <h2>创新点与难点</h2>
+<!-- ====== 23 Innovation ====== -->
+<div class="slide slide-center" data-slide="23">
+  <div class="deco ring ring-lg" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--gold);opacity:0.05;"></div>
+  <div class="deco blob blob-sm" style="background:var(--gold);top:10%;right:10%;"></div>
+  <div class="deco blob blob-sm" style="background:var(--primary);bottom:10%;left:8%;"></div>
+  <div class="deco deco-icon bottom-left">💡</div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d5"></div>
+  <h2>创新点</h2>
   <div class="steps">
     <div class="step-row">
       <div class="step-num">1</div>
-      <div>
-        <div style="font-weight:700;font-size:15px;">多路召回+动态权重融合架构</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
-          区别于传统单一算法，设计 <b style="color:var(--primary);">Item-CF + Content-Based + Hot + Realtime</b> 四路并行召回，通过归一化加权融合，且权重可通过管理后台<b style="color:var(--gold);">实时动态调整</b>，无需修改代码或重启服务。
-        </div>
-      </div>
+      <div><div style="font-weight:700;font-size:14px;">多路召回 + 动态权重融合</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">四路并行召回，权重可实时调整，无需重启</div></div>
     </div>
     <div class="step-row">
       <div class="step-num">2</div>
-      <div>
-        <div style="font-weight:700;font-size:15px;">智能冷启动处理</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
-          预设冷启动阈值（默认5条行为），当新用户行为数据不足时，<b style="color:var(--accent);">自动降级</b>为基于用户画像品类偏好+商品销量的热门兜底策略，确保推荐始终可用。
-        </div>
-      </div>
+      <div><div style="font-weight:700;font-size:14px;">智能冷启动处理</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">行为不足时自动降级为品类偏好 + 热门兜底</div></div>
     </div>
     <div class="step-row">
       <div class="step-num">3</div>
-      <div>
-        <div style="font-weight:700;font-size:15px;">近实时反馈闭环</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
-          用户行为（浏览/收藏/加购/购买）<b style="color:var(--accent);">异步触发推荐刷新</b>，结合定时离线全量计算（每天凌晨2点），在实时性和计算成本之间取得平衡。
-        </div>
-      </div>
+      <div><div style="font-weight:700;font-size:14px;">近实时反馈闭环</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">异步触发刷新 + 定时离线重建，平衡实时性与成本</div></div>
     </div>
     <div class="step-row">
       <div class="step-num">4</div>
-      <div>
-        <div style="font-weight:700;font-size:15px;">完整的工程化实现</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
-          不仅是算法设计，更是包含<b style="color:var(--primary);">前端展示、后端服务、推荐引擎、管理后台、效果评估</b>的完整系统，具备真实可用性。16张数据表、82个商品、完整的用户画像体系。
-        </div>
-      </div>
+      <div><div style="font-weight:700;font-size:14px;">完整工程化实现</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">前端 + 后端 + 引擎 + 管理后台 + 效果评估的完整系统</div></div>
     </div>
   </div>
 </div>
 
-<!-- ===== Slide 13: Summary ===== -->
-<div class="slide slide-center" data-slide="13">
+<!-- ====== 24 Summary ====== -->
+<div class="slide slide-center" data-slide="24">
+  <div class="deco dot-grid" style="opacity:0.2;"></div>
+  <div class="deco blob blob-1" style="background:var(--primary);opacity:0.05;"></div>
+  <div class="deco blob blob-2" style="background:var(--green);opacity:0.05;"></div>
+  <div class="deco corner-tl primary"></div>
+  <div class="deco corner-br primary"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d4"></div>
   <h2>总结与展望</h2>
-  <div class="card-grid col2" style="max-width:1000px;">
+  <div class="card-grid col2" style="max-width:900px;">
     <div class="card" style="text-align:left;">
-      <h3>已完成工作</h3>
-      <ul style="font-size:13px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
+      <h3>已完成</h3>
+      <ul style="font-size:13px;line-height:2;color:var(--text2);padding-left:16px;margin-top:4px;">
         <li>完整的前后端分离电商推荐系统</li>
         <li>四种推荐算法核心实现</li>
         <li>动态权重配置管理后台</li>
         <li>冷启动方案与兜底策略</li>
-        <li>Redis缓存 + 异步任务优化</li>
+        <li>Redis 缓存 + 异步任务优化</li>
         <li>用户画像 + 行为追踪 + 反馈闭环</li>
-        <li>推荐效果多维度评估指标</li>
-        <li>82个商品、6个模拟用户的完整测试数据</li>
       </ul>
     </div>
     <div class="card" style="text-align:left;">
       <h3>未来展望</h3>
-      <ul style="font-size:13px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
-        <li>引入深度学习模型（如 Wide&Deep）</li>
-        <li>实时流计算框架（Flink/Kafka）</li>
-        <li>A/B 实验平台，在线效果对比</li>
+      <ul style="font-size:13px;line-height:2;color:var(--text2);padding-left:16px;margin-top:4px;">
+        <li>深度学习模型（Wide&Deep）</li>
+        <li>实时流计算（Flink/Kafka）</li>
+        <li>A/B 实验平台</li>
         <li>图神经网络增强协同过滤</li>
-        <li>多模态推荐（图片+文本+视频）</li>
-        <li>强化学习动态调整权重</li>
-        <li>微服务架构拆分</li>
+        <li>多模态推荐</li>
+        <li>强化学习动态调权</li>
       </ul>
     </div>
   </div>
 </div>
 
-<!-- ===== Slide 14: Thank You ===== -->
-<div class="slide slide-center" data-slide="14">
+<!-- ====== 25 Thank You ====== -->
+<div class="slide slide-center" data-slide="25">
   <div class="cover-particles" id="particles-end"></div>
+  <div class="deco blob blob-1" style="top:-60px;right:-60px;width:300px;height:300px;"></div>
+  <div class="deco blob blob-2" style="bottom:-40px;left:-40px;width:250px;height:250px;"></div>
+  <div class="deco ring ring-lg" style="top:50%;left:50%;transform:translate(-50%,-50%);border-color:var(--primary);opacity:0.05;"></div>
+  <div class="deco float-dot d1"></div>
+  <div class="deco float-dot d2"></div>
+  <div class="deco float-dot d3"></div>
+  <div class="deco float-dot d4"></div>
+  <div class="deco float-dot d5"></div>
   <div style="position:relative;z-index:1;">
-    <div style="font-size:4rem;margin-bottom:20px;">🙏</div>
-    <h1 style="font-size:3rem;">感谢聆听</h1>
-    <div style="font-size:1.2rem;color:var(--text2);margin:24px 0;">THANK YOU</div>
-    <div style="font-size:15px;color:var(--text2);line-height:2;">
+    <div style="font-size:3rem;margin-bottom:16px;">🙏</div>
+    <h1 style="font-size:2.6rem;">感谢聆听</h1>
+    <div style="font-size:1.1rem;color:var(--text2);margin:20px 0;">THANK YOU</div>
+    <div style="font-size:14px;color:var(--text2);line-height:2;">
       <div>答辩人：王嘉庆</div>
       <div>基于 Spring Boot 的电商智能推荐系统的设计与实现</div>
-      <div style="margin-top:12px;font-size:13px;">请各位老师批评指正</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text3);">请各位老师批评指正</div>
     </div>
   </div>
 </div>
 
-</div><!-- /#slides -->
+</div>
 
 <script>
-// ===== State =====
 let currentSlide = 0;
-const totalSlides = 15;
+const totalSlides = 26;
 let isAnimating = false;
 
-// ===== Init Nav Dots =====
 function initNavDots() {
   const dots = document.getElementById('nav-dots');
   dots.innerHTML = '';
   for (let i = 0; i < totalSlides; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
-    dot.onclick = () => goToSlide(i);
-    dot.title = 'Slide ' + (i + 1);
-    dots.appendChild(dot);
+    const d = document.createElement('div');
+    d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goToSlide(i);
+    dots.appendChild(d);
   }
 }
 
-// ===== Slide Navigation (direction-aware) =====
 function goToSlide(index) {
-  if (isAnimating) return;
-  if (index === currentSlide) return;
-  if (index < 0 || index >= totalSlides) return;
-
+  if (isAnimating || index === currentSlide || index < 0 || index >= totalSlides) return;
   isAnimating = true;
-  const goingForward = index > currentSlide;
-
-  const oldSlide = document.querySelector('[data-slide="' + currentSlide + '"]');
-  const newSlide = document.querySelector('[data-slide="' + index + '"]');
-
-  // Figure out correct data-slide-center class
-  function dataClass(el) {
-    if (!el) return '';
-    var cls = '';
-    if (el.classList.contains('slide-center')) cls = ' slide-center';
-    return 'slide' + cls;
-  }
-
-  if (oldSlide) {
-    // Animate old slide OUT
-    oldSlide.style.transition = 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94)';
-    oldSlide.style.opacity = '0';
-    oldSlide.style.transform = goingForward ? 'translateX(-80px)' : 'translateX(80px)';
-    oldSlide.classList.remove('active');
-  }
-
-  if (newSlide) {
-    // Set initial position (no transition)
-    newSlide.style.transition = 'none';
-    newSlide.style.opacity = '0';
-    newSlide.style.transform = goingForward ? 'translateX(80px)' : 'translateX(-80px)';
-    // Force reflow so the browser registers the starting position
-    newSlide.offsetHeight;
-    // Animate new slide IN
-    newSlide.style.transition = 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94)';
-    newSlide.style.opacity = '1';
-    newSlide.style.transform = 'translateX(0)';
-    newSlide.classList.add('active');
-  }
-
-  // Update nav dots
-  var allDots = document.querySelectorAll('.nav-dot');
-  for (var d = 0; d < allDots.length; d++) {
-    allDots[d].classList.toggle('active', d === index);
-  }
-
-  // Update progress & indicator
+  const fwd = index > currentSlide;
+  const old = document.querySelector('[data-slide="' + currentSlide + '"]');
+  const nxt = document.querySelector('[data-slide="' + index + '"]');
+  if (old) { old.style.transition = 'opacity 0.35s ease, transform 0.35s ease'; old.style.opacity = '0'; old.style.transform = fwd ? 'translateX(-60px)' : 'translateX(60px)'; old.classList.remove('active'); }
+  if (nxt) { nxt.style.transition = 'none'; nxt.style.opacity = '0'; nxt.style.transform = fwd ? 'translateX(60px)' : 'translateX(-60px)'; nxt.offsetHeight; nxt.style.transition = 'opacity 0.35s ease, transform 0.35s ease'; nxt.style.opacity = '1'; nxt.style.transform = 'translateX(0)'; nxt.classList.add('active'); }
+  document.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === index));
   document.getElementById('progress-bar').style.width = ((index + 1) / totalSlides * 100) + '%';
   document.getElementById('page-indicator').textContent = (index + 1) + ' / ' + totalSlides;
-
   currentSlide = index;
-
-  // Slide-specific triggers
-  if (index === 10) setTimeout(animateMetrics, 350);
-  if (index === 0 || index === 14) initParticles(index === 0 ? 'particles' : 'particles-end');
-
-  // Cleanup after animation completes
-  setTimeout(function() {
-    if (oldSlide) {
-      oldSlide.style.transition = 'none';
-      oldSlide.style.opacity = '';
-      oldSlide.style.transform = '';
-    }
-    if (newSlide) {
-      newSlide.style.transition = '';
-      newSlide.style.opacity = '';
-      newSlide.style.transform = '';
-    }
-    isAnimating = false;
-  }, 420);
+  if (index === 21) setTimeout(animateMetrics, 300);
+  if (index === 0 || index === 25) initParticles(index === 0 ? 'particles' : 'particles-end');
+  setTimeout(() => { if (old) { old.style.transition = 'none'; old.style.opacity = ''; old.style.transform = ''; } if (nxt) { nxt.style.transition = ''; nxt.style.opacity = ''; nxt.style.transform = ''; } isAnimating = false; }, 370);
 }
 
 function nextSlide() { goToSlide(currentSlide + 1); }
 function prevSlide() { goToSlide(currentSlide - 1); }
 
-// ===== Keyboard Navigation =====
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-    e.preventDefault();
-    nextSlide();
-  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-    e.preventDefault();
-    prevSlide();
-  } else if (e.key === 'Home') {
-    e.preventDefault();
-    goToSlide(0);
-  } else if (e.key === 'End') {
-    e.preventDefault();
-    goToSlide(totalSlides - 1);
-  }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+  else if (e.key === 'Home') { e.preventDefault(); goToSlide(0); }
+  else if (e.key === 'End') { e.preventDefault(); goToSlide(totalSlides - 1); }
 });
 
-// ===== Touch Swipe =====
-var touchStartX = 0;
-document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive: true});
-document.addEventListener('touchend', function(e) {
-  var diff = touchStartX - e.changedTouches[0].clientX;
-  if (Math.abs(diff) > 50) {
-    if (diff > 0) nextSlide();
-    else prevSlide();
-  }
-});
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', e => { const d = tx - e.changedTouches[0].clientX; if (Math.abs(d) > 50) d > 0 ? nextSlide() : prevSlide(); });
 
-// ===== Mouse Wheel =====
-var wheelTimeout;
-document.addEventListener('wheel', function(e) {
-  e.preventDefault();
-  if (wheelTimeout) return;
-  wheelTimeout = setTimeout(function() { wheelTimeout = null; }, 700);
-  if (e.deltaY > 0) nextSlide();
-  else prevSlide();
-}, {passive: false});
+let wt;
+document.addEventListener('wheel', e => { e.preventDefault(); if (wt) return; wt = setTimeout(() => wt = null, 600); e.deltaY > 0 ? nextSlide() : prevSlide(); }, { passive: false });
 
-// ===== Cover Particles =====
-function initParticles(containerId) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = '';
-  var colors = ['#6366f1', '#06b6d4', '#ec4899', '#10b981', '#fbbf24', '#f97316'];
-  for (var i = 0; i < 30; i++) {
-    var p = document.createElement('div');
+function initParticles(id) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  c.innerHTML = '';
+  const colors = ['#4338ca','#0891b2','#be185d','#047857','#d97706'];
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
     p.className = 'cover-particle';
-    var size = Math.random() * 6 + 3;
-    p.style.width = size + 'px';
-    p.style.height = size + 'px';
-    p.style.left = Math.random() * 100 + '%';
-    p.style.background = colors[Math.floor(Math.random() * colors.length)];
-    p.style.animationDuration = (Math.random() * 8 + 5) + 's';
-    p.style.animationDelay = (Math.random() * 6) + 's';
-    container.appendChild(p);
+    const s = Math.random() * 5 + 2;
+    p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;background:${colors[i%5]};animation-duration:${Math.random()*8+5}s;animation-delay:${Math.random()*5}s`;
+    c.appendChild(p);
   }
 }
 
-// ===== Architecture Layer Highlight =====
-function highlightLayer(layer) {
-  var layers = document.querySelectorAll('#arch-svg .layer');
-  for (var i = 0; i < layers.length; i++) {
-    var rect = layers[i].querySelector('rect');
-    var isTarget = layers[i].id === 'layer-' + layer;
-    rect.setAttribute('stroke', isTarget ? '#1e293b' : rect.getAttribute('data-orig-stroke') || rect.getAttribute('stroke'));
-    if (!rect.getAttribute('data-orig-stroke')) {
-      rect.setAttribute('data-orig-stroke', rect.getAttribute('stroke'));
-    }
-    rect.setAttribute('stroke-width', isTarget ? '3' : '2');
-  }
-  var info = {
-    frontend: '前端展示层：Vue 3 SPA，History 路由模式，Element Plus UI，Pinia 状态管理，Axios 拦截器自动注入 JWT Token',
-    backend: '业务逻辑层：Spring Boot 3.3.5，Spring Security + JWT 无状态认证，MyBatis-Plus ORM，RESTful API，全局异常处理',
-    data: 'MySQL 8.0 主存储：16张业务表，完整的用户-商品-订单-行为数据模型，支持事务和关联查询',
-    cache: 'Redis 7.x 缓存层：推荐结果缓存(TTL 30min)，相似商品缓存(TTL 2-4h)，用户会话缓存，显著降低数据库压力',
-    async: '异步任务层：@Async 异步刷新推荐（用户行为后触发），@Scheduled 定时离线全量重建（Cron: 0 0 2 * * ?），支持管理员手动触发重算'
+function hl(layer) {
+  document.querySelectorAll('#arch-svg .layer').forEach(l => {
+    const r = l.querySelector('rect');
+    if (!r.dataset.orig) r.dataset.orig = r.getAttribute('stroke');
+    const t = l.id === 'l-' + layer;
+    r.setAttribute('stroke', t ? '#111827' : r.dataset.orig);
+    r.setAttribute('stroke-width', t ? '2.5' : '1.5');
+  });
+  const info = {
+    frontend: 'Vue 3 SPA · Element Plus · Pinia 状态管理 · Axios 自动注入 JWT',
+    backend: 'Spring Boot 3.3.5 · Security + JWT · MyBatis-Plus · RESTful API',
+    data: 'MySQL 8.0 · 16张业务表 · 完整数据模型',
+    cache: 'Redis 7.x · 推荐结果 TTL 30min · 相似商品 TTL 2-4h',
+    async: '@Async 异步刷新 · @Scheduled 凌晨2点全量重建 · 手动触发'
   };
   document.getElementById('arch-info').textContent = info[layer] || '';
 }
 
-// ===== Pipeline Focus =====
-function focusPipeline(node) {
-  var nodes = document.querySelectorAll('.pipe-node');
-  for (var i = 0; i < nodes.length; i++) nodes[i].classList.remove('active-node');
-  var el = document.querySelector('.pipe-node[data-node="' + node + '"]');
+function focusPipe(node) {
+  document.querySelectorAll('.pipe-node').forEach(n => n.classList.remove('active-node'));
+  const el = document.querySelector(`.pipe-node[data-node="${node}"]`);
   if (el) el.classList.add('active-node');
 }
 
-// ===== Weight Sliders =====
 function updateWeights() {
-  var cf = parseFloat(document.getElementById('slider-cf').value);
-  var cb = parseFloat(document.getElementById('slider-cb').value);
-  var hot = parseFloat(document.getElementById('slider-hot').value);
-  var rt = parseFloat(document.getElementById('slider-rt').value);
-  var sum = cf + cb + hot + rt;
-
+  const cf = +document.getElementById('slider-cf').value;
+  const cb = +document.getElementById('slider-cb').value;
+  const hot = +document.getElementById('slider-hot').value;
+  const rt = +document.getElementById('slider-rt').value;
+  const sum = cf + cb + hot + rt;
   document.getElementById('val-cf').textContent = cf.toFixed(2);
   document.getElementById('val-cb').textContent = cb.toFixed(2);
   document.getElementById('val-hot').textContent = hot.toFixed(2);
   document.getElementById('val-rt').textContent = rt.toFixed(2);
-  document.getElementById('weight-sum').textContent = '总和：' + sum.toFixed(2);
-  document.getElementById('weight-sum').style.color = Math.abs(sum - 1) < 0.01 ? 'var(--green)' : 'var(--red)';
-
-  var max = Math.max(cf, cb, hot, rt) || 1;
+  const el = document.getElementById('weight-sum');
+  el.textContent = '总和：' + sum.toFixed(2);
+  el.style.color = Math.abs(sum - 1) < 0.01 ? 'var(--green)' : 'var(--accent2)';
+  const max = Math.max(cf, cb, hot, rt) || 1;
   document.getElementById('bar-cf').style.height = (cf / max * 100) + 'px';
   document.getElementById('bar-cb').style.height = (cb / max * 100) + 'px';
   document.getElementById('bar-hot').style.height = (hot / max * 100) + 'px';
   document.getElementById('bar-rt').style.height = (rt / max * 100) + 'px';
 }
 
-// ===== Metrics Animation =====
 function animateMetrics() {
-  var cards = document.querySelectorAll('.count-up');
-  for (var c = 0; c < cards.length; c++) {
-    (function(card) {
-      var target = parseFloat(card.getAttribute('data-target'));
-      card.textContent = '0%';
-      var duration = 1200;
-      var start = performance.now();
-      function tick(now) {
-        var elapsed = now - start;
-        var progress = Math.min(elapsed / duration, 1);
-        var eased = 1 - Math.pow(1 - progress, 3);
-        card.textContent = (target * eased).toFixed(1) + '%';
-        if (progress < 1) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    })(cards[c]);
-  }
+  document.querySelectorAll('.count-up').forEach(card => {
+    const target = +card.dataset.target;
+    card.textContent = '0%';
+    const start = performance.now();
+    (function tick(now) {
+      const p = Math.min((now - start) / 1200, 1);
+      card.textContent = (target * (1 - Math.pow(1 - p, 3))).toFixed(1) + '%';
+      if (p < 1) requestAnimationFrame(tick);
+    })(start);
+  });
 }
 
-// ===== Data Flow Animation =====
-var flowTimer = null;
-function animateFlow() {
-  var steps = document.querySelectorAll('#data-flow-anim .flow-step');
-  for (var s = 0; s < steps.length; s++) steps[s].classList.remove('highlight');
+let flowTimer = null;
+function animateFlowLoop() {
+  const steps = document.querySelectorAll('#data-flow-loop .fl-step');
+  steps.forEach(s => s.classList.remove('hl'));
   if (flowTimer) clearTimeout(flowTimer);
-
-  var i = 0;
-  function highlightNext() {
-    if (i > 0) steps[i - 1].classList.remove('highlight');
-    if (i >= steps.length) { flowTimer = null; return; }
-    steps[i].classList.add('highlight');
+  const order = [0, 1, 2, 3, 4, 5, 6, 0];
+  let i = 0;
+  (function next() {
+    if (i > 0) steps.forEach(s => { if (+s.dataset.flow === order[i - 1]) s.classList.remove('hl'); });
+    if (i >= order.length) return;
+    steps.forEach(s => { if (+s.dataset.flow === order[i]) s.classList.add('hl'); });
     i++;
-    flowTimer = setTimeout(highlightNext, 500);
-  }
-  highlightNext();
+    flowTimer = setTimeout(next, 500);
+  })();
 }
 
-// ===== Feature Tabs =====
-function switchFeatureTab(tab) {
-  var tabs = document.querySelectorAll('#feature-tabs .tab');
-  for (var t = 0; t < tabs.length; t++) tabs[t].classList.remove('active');
-  document.getElementById('feature-content-user').style.display = tab === 'user' ? '' : 'none';
-  document.getElementById('feature-content-admin').style.display = tab === 'admin' ? '' : 'none';
-  tabs[tab === 'user' ? 0 : 1].classList.add('active');
-}
-
-// ===== Init =====
-function init() {
-  initNavDots();
-  initParticles('particles');
-  document.getElementById('progress-bar').style.width = (1 / totalSlides * 100) + '%';
-  document.getElementById('page-indicator').textContent = '1 / ' + totalSlides;
-}
-
-init();
+initNavDots();
+initParticles('particles');
+document.getElementById('progress-bar').style.width = (1 / totalSlides * 100) + '%';
+document.getElementById('page-indicator').textContent = '1 / ' + totalSlides;
 </script>
 </body>
 </html>
