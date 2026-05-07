@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>基于 Spring Boot 的电商智能推荐系统 — 毕业答辩</title>
+<style>
+/* ===== CSS Reset & Variables ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root {
+  --bg: #f8fafc;
+  --bg2: #eef2f6;
+  --surface: #ffffff;
+  --surface2: #e2e8f0;
+  --border: #e2e8f0;
+  --primary: #6366f1;
+  --primary2: #4f46e5;
+  --accent: #06b6d4;
+  --accent2: #ec4899;
+  --gold: #d97706;
+  --text: #1e293b;
+  --text2: #64748b;
+  --green: #10b981;
+  --red: #ef4444;
+  --orange: #f97316;
+  --shadow: 0 4px 24px rgba(0,0,0,0.06);
+  --shadow-hover: 0 12px 40px rgba(0,0,0,0.1);
+  --font: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  --radius: 16px;
+  --transition: 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+
+/* ===== Base ===== */
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+}
+
+/* ===== Slide Container ===== */
+#slides {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 80px;
+  opacity: 0;
+  transform: translateX(80px);
+  pointer-events: none;
+  transition: none;
+}
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
+  z-index: 1;
+}
+
+/* ===== Progress Bar ===== */
+#progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg,var(--primary),var(--accent));
+  transition: width 0.5s ease;
+  z-index: 1000;
+  border-radius: 0 2px 2px 0;
+}
+
+/* ===== Navigation Dots ===== */
+#nav-dots {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+.nav-dot.active { background: var(--primary); border-color: var(--primary2); transform: scale(1.3); }
+.nav-dot:hover { background: var(--primary2); }
+
+#nav-hint {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text2);
+}
+.nav-key {
+  background: var(--surface);
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.nav-key kbd { color: var(--primary); font-weight: 700; }
+
+/* ===== Typography ===== */
+h1 { font-size: 3rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 40px; color: var(--text); position: relative; }
+h2::after { content:''; display:block; width:60px; height:4px; background:linear-gradient(90deg,var(--primary),var(--accent)); margin:12px auto 0; border-radius:2px; }
+h3 { font-size: 1.3rem; font-weight: 600; color: var(--primary2); margin-bottom: 10px; }
+.slide-center { text-align: center; }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: all var(--transition);
+  cursor: default;
+  box-shadow: var(--shadow);
+}
+.card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.card-grid { display: grid; gap: 20px; width: 100%; max-width: 1100px; }
+.card-grid.col2 { grid-template-columns: 1fr 1fr; }
+.card-grid.col3 { grid-template-columns: 1fr 1fr 1fr; }
+.card-grid.col4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+/* ===== Tech Tags ===== */
+.tag {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 3px;
+}
+.tag-purple { background: #eef2ff; color: #4f46e5; }
+.tag-cyan { background: #ecfeff; color: #0891b2; }
+.tag-pink { background: #fdf2f8; color: #db2777; }
+.tag-green { background: #ecfdf5; color: #059669; }
+.tag-orange { background: #fff7ed; color: #ea580c; }
+.tag-gold { background: #fffbeb; color: #b45309; }
+.tag-red { background: #fef2f2; color: #dc2626; }
+
+/* ===== Interactive Recommendation Engine ===== */
+.engine-pipeline {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 30px;
+  justify-content: center;
+}
+.pipe-node {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  text-align: center;
+  min-width: 120px;
+  transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.pipe-node:hover { border-color: var(--primary); box-shadow: 0 0 20px rgba(99,102,241,0.15); }
+.pipe-node.active-node { border-color: var(--accent); box-shadow: 0 0 28px rgba(6,182,212,0.2); animation: pulse-border 1.5s infinite; background: #f0fdfa; }
+@keyframes pulse-border { 0%,100%{box-shadow:0 0 12px rgba(6,182,212,0.1)} 50%{box-shadow:0 0 28px rgba(6,182,212,0.25)} }
+.pipe-arrow { font-size: 1.5rem; color: var(--text2); }
+.pipe-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* Sliders */
+.weight-sliders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+.weight-slider-group label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: var(--text2);
+}
+.weight-slider-group label span.val { color: var(--primary); font-weight: 700; }
+.weight-slider-group input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface2);
+  outline: none;
+}
+.weight-slider-group input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.slider-cf::-webkit-slider-thumb { background: var(--primary); }
+.slider-cb::-webkit-slider-thumb { background: var(--accent); }
+.slider-hot::-webkit-slider-thumb { background: var(--orange); }
+.slider-rt::-webkit-slider-thumb { background: var(--accent2); }
+
+/* Score bars */
+.score-display { display: flex; gap: 8px; align-items: flex-end; height: 120px; margin-top: 16px; }
+.score-bar {
+  flex: 1;
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  transition: height 0.5s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.bar-cf { background: linear-gradient(180deg, #6366f1, #a5b4fc); }
+.bar-cb { background: linear-gradient(180deg, #06b6d4, #67e8f9); }
+.bar-hot { background: linear-gradient(180deg, #f97316, #fdba74); }
+.bar-rt { background: linear-gradient(180deg, #ec4899, #f9a8d4); }
+
+/* ===== Architecture SVG ===== */
+#arch-svg { width: 100%; max-width: 960px; }
+#arch-svg .layer { transition: all 0.4s; cursor: pointer; }
+#arch-svg .layer:hover rect { filter: brightness(0.97); stroke-width:2.5 !important; }
+#arch-svg text { font-family: var(--font); }
+
+/* ===== Data Flow ===== */
+.data-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.flow-step {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.5s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.flow-step.highlight { background: var(--primary); color: #fff; transform: scale(1.08); box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
+.flow-arrow { color: var(--primary); font-size: 1.3rem; font-weight: 700; }
+
+/* ===== Metrics ===== */
+.metrics-row { display: flex; gap: 20px; width: 100%; max-width: 900px; justify-content: center; }
+.metric-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px 28px;
+  text-align: center;
+  min-width: 140px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.metric-value { font-size: 2.5rem; font-weight: 800; }
+.metric-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.metric-val-cf { color: var(--primary); }
+.metric-val-cb { color: var(--accent); }
+.metric-val-hot { color: var(--orange); }
+.metric-val-rt { color: var(--accent2); }
+
+/* ===== Cover Particles ===== */
+.cover-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.cover-particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.25;
+  animation: float-up linear infinite;
+}
+@keyframes float-up {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 0.35; }
+  90% { opacity: 0.08; }
+  100% { transform: translateY(-10vh) scale(2); opacity: 0; }
+}
+
+/* ===== Comparison Table ===== */
+.compare-table { width: 100%; max-width: 900px; border-collapse: collapse; }
+.compare-table th {
+  background: var(--bg2);
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--primary2);
+  border-bottom: 2px solid var(--border);
+  font-weight: 700;
+}
+.compare-table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+.compare-table tr:hover td { background: #f8fafc; }
+
+/* ===== Tabs ===== */
+.tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: 99px; padding: 4px; margin-bottom: 24px; }
+.tab {
+  padding: 10px 24px;
+  border-radius: 99px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+  color: var(--text2);
+}
+.tab.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
+.tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.6); }
+
+/* ===== Steps ===== */
+.steps { width: 100%; max-width: 900px; }
+.step-row { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; padding: 16px; border-radius: var(--radius); background: var(--surface); border-left: 3px solid transparent; transition: all 0.3s; cursor: default; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+.step-row:hover { border-left-color: var(--primary); box-shadow: var(--shadow); }
+.step-num {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .slide { padding: 30px 20px; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.4rem; }
+  .card-grid.col2,.card-grid.col3,.card-grid.col4 { grid-template-columns: 1fr; }
+  .weight-sliders { grid-template-columns: 1fr; }
+  .engine-pipeline { flex-wrap: wrap; justify-content: center; }
+  .metrics-row { flex-wrap: wrap; }
+}
+
+/* ===== Legend ===== */
+.legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ===== Animated Number ===== */
+@keyframes count-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.count-up { animation: count-up 0.6s ease-out; }
+
+/* ===== Clickable TOC cards ===== */
+.toc-card { cursor: pointer; }
+
+/* ===== Inline code ===== */
+code { background: var(--bg2); padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--primary2); }
+
+/* ===== Buttons ===== */
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+}
+.btn-primary:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(99,102,241,0.4); }
+.btn-outline {
+  background: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  padding: 8px 20px;
+  border-radius: 99px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-outline:hover { border-color: var(--primary); background: #f8fafc; }
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div id="progress-bar" style="width:0%"></div>
+
+<!-- Navigation Dots -->
+<div id="nav-dots"></div>
+
+<!-- Navigation Hint -->
+<div id="nav-hint">
+  <span class="nav-key">按 <kbd>&larr;</kbd> <kbd>&rarr;</kbd> 方向键翻页</span>
+  <span class="nav-key">按 <kbd>Space</kbd> 下一张</span>
+  <span class="nav-key" id="page-indicator">1 / 15</span>
+</div>
+
+<!-- ============ SLIDES ============ -->
+<div id="slides">
+
+<!-- ===== Slide 0: Cover ===== -->
+<div class="slide slide-center active" data-slide="0">
+  <div class="cover-particles" id="particles"></div>
+  <div style="position:relative;z-index:1;">
+    <div style="font-size:14px;color:var(--primary);letter-spacing:4px;text-transform:uppercase;margin-bottom:16px;font-weight:600;">本科毕业设计答辩</div>
+    <h1 style="font-size:3.2rem;margin-bottom:12px;">基于 Spring Boot 的<br>电商智能推荐系统的设计与实现</h1>
+    <div style="font-size:1.1rem;color:var(--text2);margin-bottom:40px;">Design and Implementation of E-commerce Intelligent<br>Recommendation System Based on Spring Boot</div>
+    <div style="display:flex;gap:40px;justify-content:center;flex-wrap:wrap;">
+      <div><div style="font-size:12px;color:var(--text2);">答辩人</div><div style="font-weight:700;font-size:1.1rem;">王嘉庆</div></div>
+      <div><div style="font-size:12px;color:var(--text2);">学号</div><div style="font-weight:700;font-size:1.1rem;">202221010534</div></div>
+      <div><div style="font-size:12px;color:var(--text2);">指导老师</div><div style="font-weight:700;font-size:1.1rem;">——</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 1: TOC ===== -->
+<div class="slide slide-center" data-slide="1">
+  <h2>目录 CONTENTS</h2>
+  <div class="card-grid col2" style="max-width:800px;">
+    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(2)">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">01</div>
+      <div><div style="font-weight:700;">项目背景与意义</div><div style="font-size:12px;color:var(--text2);">研究动机与目标</div></div>
+    </div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(3)">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#06b6d4,#22d3ee);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">02</div>
+      <div><div style="font-weight:700;">技术栈概览</div><div style="font-size:12px;color:var(--text2);">前后端技术选型</div></div>
+    </div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(4)">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#ec4899,#f472b6);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">03</div>
+      <div><div style="font-weight:700;">系统架构设计</div><div style="font-size:12px;color:var(--text2);">分层架构与数据流</div></div>
+    </div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(5)">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f97316,#fb923c);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">04</div>
+      <div><div style="font-weight:700;">核心推荐算法</div><div style="font-size:12px;color:var(--text2);">混合推荐策略 ⭐</div></div>
+    </div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(8)">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">05</div>
+      <div><div style="font-weight:700;">数据模型设计</div><div style="font-size:12px;color:var(--text2);">16张核心表</div></div>
+    </div>
+    <div class="card toc-card" style="display:flex;align-items:center;gap:14px;" onclick="goToSlide(9)">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#d97706,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;color:#fff;">06</div>
+      <div><div style="font-weight:700;">功能模块展示</div><div style="font-size:12px;color:var(--text2);">用户端+管理端</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 2: Background ===== -->
+<div class="slide slide-center" data-slide="2">
+  <h2>项目背景与意义</h2>
+  <div class="card-grid col2" style="max-width:1000px;">
+    <div class="card" style="text-align:left;">
+      <h3>行业背景</h3>
+      <ul style="font-size:14px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
+        <li>电商市场规模持续增长，<b style="color:var(--accent);">信息过载</b>问题日益严重</li>
+        <li>用户在海量商品中难以快速找到感兴趣的内容</li>
+        <li>个性化推荐成为电商平台的<b style="color:var(--gold);">核心竞争力</b></li>
+        <li>传统推荐系统多基于单一算法，效果有限</li>
+      </ul>
+    </div>
+    <div class="card" style="text-align:left;">
+      <h3>研究目标</h3>
+      <ul style="font-size:14px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
+        <li>设计并实现一个完整的<b style="color:var(--accent);">电商智能推荐系统</b></li>
+        <li>融合多种推荐算法，<b style="color:var(--gold);">多路召回+权重融合</b></li>
+        <li>支持<b style="color:var(--primary);">动态配置</b>推荐策略，无需重启</li>
+        <li>解决<b style="color:var(--orange);">冷启动</b>问题，提供兜底策略</li>
+        <li>前后端分离架构，具备实际应用价值</li>
+      </ul>
+    </div>
+  </div>
+  <div class="legend" style="margin-top:20px;">
+    <span class="legend-item"><span class="legend-dot" style="background:var(--primary);"></span> 协同过滤</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--accent);"></span> 内容推荐</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--orange);"></span> 热度推荐</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--accent2);"></span> 实时推荐</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--gold);"></span> 动态权重</span>
+  </div>
+</div>
+
+<!-- ===== Slide 3: Tech Stack ===== -->
+<div class="slide slide-center" data-slide="3">
+  <h2>技术栈概览</h2>
+  <div class="card-grid col2" style="max-width:1000px;">
+    <div class="card">
+      <h3>后端 Backend</h3>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="tag tag-purple">Spring Boot 3.3.5</span>
+        <span class="tag tag-purple">Java 17</span>
+        <span class="tag tag-cyan">MyBatis-Plus 3.5.7</span>
+        <span class="tag tag-cyan">MySQL 8.0</span>
+        <span class="tag tag-pink">Redis 7.x</span>
+        <span class="tag tag-pink">Spring Security</span>
+        <span class="tag tag-orange">JWT 0.12.6</span>
+        <span class="tag tag-green">SpringDoc OpenAPI</span>
+        <span class="tag tag-purple">@Async 异步</span>
+        <span class="tag tag-cyan">@Scheduled 定时</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>前端 Frontend</h3>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="tag tag-green">Vue 3</span>
+        <span class="tag tag-cyan">TypeScript</span>
+        <span class="tag tag-purple">Vite</span>
+        <span class="tag tag-pink">Element Plus</span>
+        <span class="tag tag-orange">Pinia</span>
+        <span class="tag tag-cyan">Vue Router 4</span>
+        <span class="tag tag-purple">Axios</span>
+        <span class="tag tag-green">SVG 可视化</span>
+        <span class="tag tag-pink">CSS3 动画</span>
+        <span class="tag tag-orange">响应式布局</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>开发工具</h3>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="tag tag-cyan">IntelliJ IDEA</span>
+        <span class="tag tag-green">VS Code</span>
+        <span class="tag tag-purple">Maven</span>
+        <span class="tag tag-orange">Git</span>
+        <span class="tag tag-pink">Postman</span>
+        <span class="tag tag-cyan">Docker</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>架构模式</h3>
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="tag tag-purple">前后端分离</span>
+        <span class="tag tag-cyan">RESTful API</span>
+        <span class="tag tag-green">JWT 无状态认证</span>
+        <span class="tag tag-orange">MVC 分层架构</span>
+        <span class="tag tag-pink">异步非阻塞</span>
+        <span class="tag tag-gold">多路召回融合</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 4: Architecture ===== -->
+<div class="slide slide-center" data-slide="4">
+  <h2>系统架构设计</h2>
+  <svg id="arch-svg" viewBox="0 0 960 450" style="width:100%;max-width:960px;">
+    <g class="layer" onclick="highlightLayer('frontend')" id="layer-frontend">
+      <rect x="40" y="20" width="880" height="65" rx="14" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+      <text x="480" y="48" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">前端展示层 — Vue 3 + Element Plus + Pinia</text>
+      <text x="480" y="68" text-anchor="middle" fill="#64748b" font-size="11">用户端 (首页/商品/购物车/订单/个人中心) · 管理端 (仪表盘/商品管理/推荐引擎配置)</text>
+    </g>
+    <text x="480" y="111" text-anchor="middle" fill="#6366f1" font-size="18" font-weight="700">↕ RESTful API / JSON / JWT</text>
+    <g class="layer" onclick="highlightLayer('backend')" id="layer-backend">
+      <rect x="40" y="125" width="880" height="65" rx="14" fill="#ecfeff" stroke="#06b6d4" stroke-width="2"/>
+      <text x="480" y="153" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">业务逻辑层 — Spring Boot + Spring Security + MyBatis-Plus</text>
+      <text x="480" y="173" text-anchor="middle" fill="#64748b" font-size="11">认证鉴权 · 商品管理 · 交易订单 · 行为采集 · 推荐引擎 (多路召回+权重融合)</text>
+    </g>
+    <text x="480" y="216" text-anchor="middle" fill="#06b6d4" font-size="18" font-weight="700">↕</text>
+    <g class="layer" onclick="highlightLayer('data')" id="layer-data">
+      <rect x="40" y="230" width="430" height="80" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+      <text x="255" y="260" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">MySQL 主存储</text>
+      <text x="255" y="280" text-anchor="middle" fill="#64748b" font-size="11">用户 · 商品 · 订单 · 行为 · 推荐结果 · 配置 (16张表)</text>
+    </g>
+    <g class="layer" onclick="highlightLayer('cache')" id="layer-cache">
+      <rect x="490" y="230" width="430" height="80" rx="14" fill="#fdf2f8" stroke="#ec4899" stroke-width="2"/>
+      <text x="705" y="260" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">Redis 缓存层</text>
+      <text x="705" y="280" text-anchor="middle" fill="#64748b" font-size="11">推荐结果缓存(30min) · 相似商品缓存(2-4h) · 用户会话</text>
+    </g>
+    <text x="480" y="341" text-anchor="middle" fill="#94a3b8" font-size="18" font-weight="700">↕</text>
+    <g class="layer" onclick="highlightLayer('async')" id="layer-async">
+      <rect x="40" y="355" width="880" height="55" rx="14" fill="#fff7ed" stroke="#f97316" stroke-width="2" stroke-dasharray="6,3"/>
+      <text x="480" y="380" text-anchor="middle" fill="#1e293b" font-size="15" font-weight="700">异步任务层 — Spring @Async + @Scheduled</text>
+      <text x="480" y="398" text-anchor="middle" fill="#64748b" font-size="11">每天凌晨2点离线全量重建 · 用户行为后异步刷新 · 管理员手动触发重算</text>
+    </g>
+  </svg>
+  <div id="arch-info" style="margin-top:12px;font-size:13px;color:var(--text2);min-height:20px;">点击各层查看详情</div>
+</div>
+
+<!-- ===== Slide 5: Core Algorithm ===== -->
+<div class="slide slide-center" data-slide="5">
+  <h2>核心推荐算法 — 混合推荐引擎 ⭐</h2>
+  <div style="width:100%;max-width:1000px;">
+    <div class="engine-pipeline">
+      <div class="pipe-node active-node" data-node="input" onclick="focusPipeline('input')">
+        <div style="font-size:1.5rem;">👤</div>
+        <div style="font-weight:700;font-size:14px;">用户请求</div>
+        <div class="pipe-label">行为数据+画像</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node" data-node="recall" onclick="focusPipeline('recall')">
+        <div style="font-size:1.5rem;">🔍</div>
+        <div style="font-weight:700;font-size:14px;">多路召回</div>
+        <div class="pipe-label">4 路并行</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node" data-node="fusion" onclick="focusPipeline('fusion')">
+        <div style="font-size:1.5rem;">⚡</div>
+        <div style="font-weight:700;font-size:14px;">权重融合</div>
+        <div class="pipe-label">归一化+加权</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node" data-node="filter" onclick="focusPipeline('filter')">
+        <div style="font-size:1.5rem;">🎯</div>
+        <div style="font-weight:700;font-size:14px;">结果过滤</div>
+        <div class="pipe-label">去重+去已购+去踩</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-node" data-node="output" onclick="focusPipeline('output')">
+        <div style="font-size:1.5rem;">📦</div>
+        <div style="font-weight:700;font-size:14px;">推荐结果</div>
+        <div class="pipe-label">Top-N 商品</div>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:left;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-weight:700;">动态权重配置（拖拽调节，实时预览融合效果）</span>
+        <span style="font-size:12px;color:var(--text2);" id="weight-sum">总和：1.00</span>
+      </div>
+      <div class="weight-sliders">
+        <div class="weight-slider-group">
+          <label>协同过滤 (Item-CF) <span class="val" id="val-cf">0.45</span></label>
+          <input type="range" class="slider-cf" id="slider-cf" min="0" max="1" step="0.01" value="0.45" oninput="updateWeights()">
+        </div>
+        <div class="weight-slider-group">
+          <label>基于内容 (Content-Based) <span class="val" id="val-cb">0.25</span></label>
+          <input type="range" class="slider-cb" id="slider-cb" min="0" max="1" step="0.01" value="0.25" oninput="updateWeights()">
+        </div>
+        <div class="weight-slider-group">
+          <label>热度推荐 (Hot) <span class="val" id="val-hot">0.20</span></label>
+          <input type="range" class="slider-hot" id="slider-hot" min="0" max="1" step="0.01" value="0.20" oninput="updateWeights()">
+        </div>
+        <div class="weight-slider-group">
+          <label>实时推荐 (Realtime) <span class="val" id="val-rt">0.10</span></label>
+          <input type="range" class="slider-rt" id="slider-rt" min="0" max="1" step="0.01" value="0.10" oninput="updateWeights()">
+        </div>
+      </div>
+      <div class="score-display">
+        <div class="score-bar bar-cf" id="bar-cf" style="height:90px;">CF</div>
+        <div class="score-bar bar-cb" id="bar-cb" style="height:50px;">CB</div>
+        <div class="score-bar bar-hot" id="bar-hot" style="height:40px;">Hot</div>
+        <div class="score-bar bar-rt" id="bar-rt" style="height:20px;">RT</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;">
+        融合公式：final_score = <b style="color:var(--primary);">w₁×norm(Item-CF)</b> + <b style="color:var(--accent);">w₂×norm(Content)</b> + <b style="color:var(--orange);">w₃×norm(Hot)</b> + <b style="color:var(--accent2);">w₄×norm(Realtime)</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 6: Algorithm Details ===== -->
+<div class="slide slide-center" data-slide="6">
+  <h2>四路召回策略详解</h2>
+  <div class="card-grid col2" style="max-width:1100px;">
+    <div class="card" style="text-align:left;border-left:4px solid var(--primary);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">1. 协同过滤 Item-CF</h3>
+        <span class="tag tag-purple">权重 0.45</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
+        基于用户行为矩阵计算商品间<b style="color:var(--accent);">余弦相似度</b>。<br>
+        构建用户-商品行为权重矩阵，利用向量点积计算共现度。<br>
+        <code>similarity(i, j) = co_occur / √(norm_i × norm_j)</code>
+      </p>
+    </div>
+    <div class="card" style="text-align:left;border-left:4px solid var(--accent);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">2. 基于内容 Content-Based</h3>
+        <span class="tag tag-cyan">权重 0.25</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
+        用户画像 (品类偏好+品牌+兴趣标签) 与商品属性<b style="color:var(--accent);">匹配打分</b>。<br>
+        品类匹配 <b>+2.0</b> | 近期浏览品类 <b>+1.4</b> | 品牌匹配 <b>+1.0</b> | 兴趣标签 <b>+0.5/条</b>
+      </p>
+    </div>
+    <div class="card" style="text-align:left;border-left:4px solid var(--orange);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">3. 热度推荐 Hot</h3>
+        <span class="tag tag-orange">权重 0.20</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
+        近7天行为数据按<b style="color:var(--accent);">行为权重</b>累加→热度分。<br>
+        浏览×1.0 | 搜索×1.5 | 收藏×3.0 | 加购×4.0 | 购买×5.0<br>
+        融合商品自身销量分+推荐分。
+      </p>
+    </div>
+    <div class="card" style="text-align:left;border-left:4px solid var(--accent2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">4. 实时推荐 Realtime</h3>
+        <span class="tag tag-pink">权重 0.10</span>
+      </div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-top:8px;">
+        基于用户<b style="color:var(--accent);">最近5条行为</b>，同品类扩散推荐。<br>
+        引入<b style="color:var(--accent2);">时间衰减因子</b> decay = 1/(i+1)。<br>
+        捕捉用户<b style="color:var(--gold);">短期兴趣漂移</b>。
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 7: Cold Start & Optimization ===== -->
+<div class="slide slide-center" data-slide="7">
+  <h2>冷启动处理 & 性能优化</h2>
+  <div class="card-grid col2" style="max-width:1000px;">
+    <div class="card" style="text-align:left;">
+      <h3>冷启动策略</h3>
+      <div style="font-size:13px;line-height:1.8;color:var(--text2);margin-top:8px;">
+        <p>当用户行为数据 &lt; <b style="color:var(--accent);">cold-start-threshold (默认5条)</b> 时：</p>
+        <ul style="padding-left:20px;margin-top:8px;">
+          <li>跳过 Item-CF（缺少足够行为数据）</li>
+          <li>基于用户画像中的<b style="color:var(--accent);">品类偏好</b>推荐</li>
+          <li>融合商品<b style="color:var(--orange);">销量分+推荐分</b></li>
+          <li>热门兜底策略，确保新用户也能获得合理推荐</li>
+        </ul>
+        <p style="margin-top:8px;background:var(--bg2);padding:10px 14px;border-radius:8px;font-size:13px;">
+          示例数据：赵子航（Frank）行为数据较少，专门用于<b style="color:var(--accent);">冷启动效果验证</b>
+        </p>
+      </div>
+    </div>
+    <div class="card" style="text-align:left;">
+      <h3>性能优化措施</h3>
+      <div style="font-size:13px;line-height:2.2;color:var(--text2);margin-top:8px;">
+        <ul style="padding-left:20px;">
+          <li><span class="tag tag-pink" style="font-size:11px;">Redis</span> 推荐结果缓存30min，相似商品缓存2-4h</li>
+          <li><span class="tag tag-purple" style="font-size:11px;">@Async</span> 用户行为后异步刷新，不阻塞响应</li>
+          <li><span class="tag tag-orange" style="font-size:11px;">@Scheduled</span> 每天凌晨2点离线全量重建</li>
+          <li><span class="tag tag-cyan" style="font-size:11px;">过滤链</span> 自动排除已购买+显式不喜欢的商品</li>
+          <li><span class="tag tag-green" style="font-size:11px;">归一化</span> 各通道 Max-Normalization 消除量纲差异</li>
+          <li><span class="tag tag-gold" style="font-size:11px;">动态配置</span> 权重可实时调整，无需重启服务</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 8: Data Model ===== -->
+<div class="slide slide-center" data-slide="8">
+  <h2>数据模型设计</h2>
+  <div style="width:100%;max-width:1100px;">
+    <div class="card-grid col4" style="margin-bottom:16px;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">👤</div>
+        <div style="font-weight:700;font-size:14px;">用户模块</div>
+        <div style="font-size:12px;color:var(--text2);">user · user_profile<br>admin_user</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">📦</div>
+        <div style="font-weight:700;font-size:14px;">商品模块</div>
+        <div style="font-size:12px;color:var(--text2);">product · category<br>product_tag</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">🛒</div>
+        <div style="font-weight:700;font-size:14px;">交易模块</div>
+        <div style="font-size:12px;color:var(--text2);">cart_item · favorite<br>orders · order_item</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">🧠</div>
+        <div style="font-weight:700;font-size:14px;">推荐模块</div>
+        <div style="font-size:12px;color:var(--text2);">user_behavior · recommend_*<br>recommend_config</div>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:left;">
+      <h3 style="text-align:center;">用户行为权重体系（<code>user_behavior</code> — 核心数据源）</h3>
+      <table class="compare-table" style="margin-top:8px;">
+        <thead>
+          <tr><th>行为类型</th><th>VIEW</th><th>CLICK</th><th>SEARCH</th><th>FAVORITE</th><th>CART</th><th>PURCHASE</th><th>REC_CLICK</th><th>DISLIKE</th></tr>
+        </thead>
+        <tbody>
+          <tr style="text-align:center;">
+            <td style="font-weight:700;">权重值</td>
+            <td><span class="tag tag-cyan">1.0</span></td>
+            <td><span class="tag tag-green">2.0</span></td>
+            <td><span class="tag tag-purple">1.5</span></td>
+            <td><span class="tag tag-orange">3.0</span></td>
+            <td><span class="tag tag-pink">4.0</span></td>
+            <td><span class="tag tag-gold">5.0</span></td>
+            <td><span class="tag tag-purple">3.0</span></td>
+            <td><span class="tag tag-red">-3.0</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px;text-align:center;">
+        16 张核心表 · 9 大商品品类 · 82 个初始商品 · 模拟用户含完整画像（年龄/城市/职业/兴趣/品牌偏好）
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 9: Features ===== -->
+<div class="slide slide-center" data-slide="9">
+  <h2>功能模块展示</h2>
+  <div class="tabs" id="feature-tabs">
+    <div class="tab active" onclick="switchFeatureTab('user')">👤 用户端功能</div>
+    <div class="tab" onclick="switchFeatureTab('admin')">⚙️ 管理端功能</div>
+  </div>
+  <div id="feature-content-user">
+    <div class="card-grid col3" style="max-width:1100px;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">🏠</div>
+        <div style="font-weight:700;">首页个性化推荐</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">Hero轮播 · 分类Tab · 推荐可视化图表 · 商品网格 · 旋转机制</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">🔍</div>
+        <div style="font-weight:700;">商品浏览与搜索</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">分类筛选 · 关键词搜索 · 价格/销量排序 · 分页 · 相似推荐</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">🛒</div>
+        <div style="font-weight:700;">购物交易流程</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">购物车 · 收藏 · 立即购买 · 订单状态追踪 · 完整订单状态机</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">👤</div>
+        <div style="font-weight:700;">个人画像管理</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">兴趣标签编辑 · 品牌偏好 · 品类偏好 · 直接影响推荐结果</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">💬</div>
+        <div style="font-weight:700;">推荐反馈机制</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">喜欢/不喜欢标记 · 负反馈自动排除 · 反馈进入下一次计算循环</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">🔐</div>
+        <div style="font-weight:700;">认证与安全</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">JWT 登录 · 24h过期 · Spring Security · 无状态会话</div>
+      </div>
+    </div>
+  </div>
+  <div id="feature-content-admin" style="display:none;">
+    <div class="card-grid col3" style="max-width:1100px;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">📊</div>
+        <div style="font-weight:700;">系统仪表盘</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">用户/商品/订单总量 · 推荐效果指标(CTR/ATC/CVR) · 最近行为列表</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">📦</div>
+        <div style="font-weight:700;">商品管理</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">商品CRUD · 标签管理 · 分类管理 · 销量/推荐分设置</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;">🧠</div>
+        <div style="font-weight:700;">推荐引擎配置 ⭐</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">四路权重实时调整 · 离线重算一键触发 · 任务日志查看 · 耗时统计</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 10: System Metrics ===== -->
+<div class="slide slide-center" data-slide="10">
+  <h2>推荐效果评估指标</h2>
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-value metric-val-cf count-up" data-target="18.7">0%</div>
+      <div class="metric-label">点击率 CTR (%)</div>
+      <div style="font-size:10px;color:var(--text2);">推荐点击 / 推荐曝光</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value metric-val-cb count-up" data-target="8.2">0%</div>
+      <div class="metric-label">加购率 ATC (%)</div>
+      <div style="font-size:10px;color:var(--text2);">加购行为 / 推荐曝光</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value metric-val-hot count-up" data-target="3.5">0%</div>
+      <div class="metric-label">购买率 CVR (%)</div>
+      <div style="font-size:10px;color:var(--text2);">购买行为 / 推荐曝光</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value metric-val-rt count-up" data-target="78.4">0%</div>
+      <div class="metric-label">覆盖率 (%)</div>
+      <div style="font-size:10px;color:var(--text2);">被推荐商品 / 总商品数</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" style="color:var(--gold);" data-target="92.1">0%</div>
+      <div class="metric-label">命中率 (%)</div>
+      <div style="font-size:10px;color:var(--text2);">(推荐点击-负反馈) / 曝光</div>
+    </div>
+  </div>
+  <div style="margin-top:20px;text-align:center;">
+    <button class="btn-primary" onclick="animateMetrics()">🔄 点击刷新指标动画</button>
+  </div>
+</div>
+
+<!-- ===== Slide 11: Data Flow ===== -->
+<div class="slide slide-center" data-slide="11">
+  <h2>推荐系统数据流闭环</h2>
+  <div style="width:100%;max-width:1000px;">
+    <div class="data-flow" style="margin-bottom:24px;" id="data-flow-anim">
+      <div class="flow-step" data-flow="0">👤 用户行为采集</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-flow="1">📊 行为数据入库</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-flow="2">🔄 异步触发刷新</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-flow="3">🧠 推荐引擎计算</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-flow="4">⚡ Redis 缓存</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-flow="5">📱 前端展示推荐</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" data-flow="6">💬 用户反馈</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:24px;">
+      <button class="btn-outline" onclick="animateFlow()">▶ 播放数据流动画</button>
+    </div>
+
+    <h3 style="text-align:center;">传统推荐 vs 本系统</h3>
+    <table class="compare-table" style="margin-top:8px;">
+      <thead>
+        <tr><th>对比维度</th><th>传统单一算法</th><th style="color:var(--primary);">本系统（混合推荐）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>召回策略</td><td>单路召回</td><td style="color:var(--primary);font-weight:700;">四路并行召回</td></tr>
+        <tr><td>冷启动</td><td>效果差，无兜底</td><td style="color:var(--primary);font-weight:700;">品类偏好+热门兜底</td></tr>
+        <tr><td>权重调整</td><td>硬编码，需重启</td><td style="color:var(--primary);font-weight:700;">后台实时动态配置</td></tr>
+        <tr><td>实时性</td><td>离线批量计算</td><td style="color:var(--primary);font-weight:700;">近实时异步刷新</td></tr>
+        <tr><td>反馈闭环</td><td>无反馈机制</td><td style="color:var(--primary);font-weight:700;">喜欢/不喜欢自动学习</td></tr>
+        <tr><td>推荐覆盖率</td><td>偏向热门头部</td><td style="color:var(--primary);font-weight:700;">兼顾长尾商品 (~78%)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== Slide 12: Innovation Points ===== -->
+<div class="slide slide-center" data-slide="12">
+  <h2>创新点与难点</h2>
+  <div class="steps">
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">多路召回+动态权重融合架构</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
+          区别于传统单一算法，设计 <b style="color:var(--primary);">Item-CF + Content-Based + Hot + Realtime</b> 四路并行召回，通过归一化加权融合，且权重可通过管理后台<b style="color:var(--gold);">实时动态调整</b>，无需修改代码或重启服务。
+        </div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">智能冷启动处理</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
+          预设冷启动阈值（默认5条行为），当新用户行为数据不足时，<b style="color:var(--accent);">自动降级</b>为基于用户画像品类偏好+商品销量的热门兜底策略，确保推荐始终可用。
+        </div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">近实时反馈闭环</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
+          用户行为（浏览/收藏/加购/购买）<b style="color:var(--accent);">异步触发推荐刷新</b>，结合定时离线全量计算（每天凌晨2点），在实时性和计算成本之间取得平衡。
+        </div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">4</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">完整的工程化实现</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px;">
+          不仅是算法设计，更是包含<b style="color:var(--primary);">前端展示、后端服务、推荐引擎、管理后台、效果评估</b>的完整系统，具备真实可用性。16张数据表、82个商品、完整的用户画像体系。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 13: Summary ===== -->
+<div class="slide slide-center" data-slide="13">
+  <h2>总结与展望</h2>
+  <div class="card-grid col2" style="max-width:1000px;">
+    <div class="card" style="text-align:left;">
+      <h3>已完成工作</h3>
+      <ul style="font-size:13px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
+        <li>完整的前后端分离电商推荐系统</li>
+        <li>四种推荐算法核心实现</li>
+        <li>动态权重配置管理后台</li>
+        <li>冷启动方案与兜底策略</li>
+        <li>Redis缓存 + 异步任务优化</li>
+        <li>用户画像 + 行为追踪 + 反馈闭环</li>
+        <li>推荐效果多维度评估指标</li>
+        <li>82个商品、6个模拟用户的完整测试数据</li>
+      </ul>
+    </div>
+    <div class="card" style="text-align:left;">
+      <h3>未来展望</h3>
+      <ul style="font-size:13px;line-height:2;color:var(--text2);padding-left:20px;margin-top:8px;">
+        <li>引入深度学习模型（如 Wide&Deep）</li>
+        <li>实时流计算框架（Flink/Kafka）</li>
+        <li>A/B 实验平台，在线效果对比</li>
+        <li>图神经网络增强协同过滤</li>
+        <li>多模态推荐（图片+文本+视频）</li>
+        <li>强化学习动态调整权重</li>
+        <li>微服务架构拆分</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Slide 14: Thank You ===== -->
+<div class="slide slide-center" data-slide="14">
+  <div class="cover-particles" id="particles-end"></div>
+  <div style="position:relative;z-index:1;">
+    <div style="font-size:4rem;margin-bottom:20px;">🙏</div>
+    <h1 style="font-size:3rem;">感谢聆听</h1>
+    <div style="font-size:1.2rem;color:var(--text2);margin:24px 0;">THANK YOU</div>
+    <div style="font-size:15px;color:var(--text2);line-height:2;">
+      <div>答辩人：王嘉庆</div>
+      <div>基于 Spring Boot 的电商智能推荐系统的设计与实现</div>
+      <div style="margin-top:12px;font-size:13px;">请各位老师批评指正</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#slides -->
+
+<script>
+// ===== State =====
+let currentSlide = 0;
+const totalSlides = 15;
+let isAnimating = false;
+
+// ===== Init Nav Dots =====
+function initNavDots() {
+  const dots = document.getElementById('nav-dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToSlide(i);
+    dot.title = 'Slide ' + (i + 1);
+    dots.appendChild(dot);
+  }
+}
+
+// ===== Slide Navigation (direction-aware) =====
+function goToSlide(index) {
+  if (isAnimating) return;
+  if (index === currentSlide) return;
+  if (index < 0 || index >= totalSlides) return;
+
+  isAnimating = true;
+  const goingForward = index > currentSlide;
+
+  const oldSlide = document.querySelector('[data-slide="' + currentSlide + '"]');
+  const newSlide = document.querySelector('[data-slide="' + index + '"]');
+
+  // Figure out correct data-slide-center class
+  function dataClass(el) {
+    if (!el) return '';
+    var cls = '';
+    if (el.classList.contains('slide-center')) cls = ' slide-center';
+    return 'slide' + cls;
+  }
+
+  if (oldSlide) {
+    // Animate old slide OUT
+    oldSlide.style.transition = 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94)';
+    oldSlide.style.opacity = '0';
+    oldSlide.style.transform = goingForward ? 'translateX(-80px)' : 'translateX(80px)';
+    oldSlide.classList.remove('active');
+  }
+
+  if (newSlide) {
+    // Set initial position (no transition)
+    newSlide.style.transition = 'none';
+    newSlide.style.opacity = '0';
+    newSlide.style.transform = goingForward ? 'translateX(80px)' : 'translateX(-80px)';
+    // Force reflow so the browser registers the starting position
+    newSlide.offsetHeight;
+    // Animate new slide IN
+    newSlide.style.transition = 'opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94)';
+    newSlide.style.opacity = '1';
+    newSlide.style.transform = 'translateX(0)';
+    newSlide.classList.add('active');
+  }
+
+  // Update nav dots
+  var allDots = document.querySelectorAll('.nav-dot');
+  for (var d = 0; d < allDots.length; d++) {
+    allDots[d].classList.toggle('active', d === index);
+  }
+
+  // Update progress & indicator
+  document.getElementById('progress-bar').style.width = ((index + 1) / totalSlides * 100) + '%';
+  document.getElementById('page-indicator').textContent = (index + 1) + ' / ' + totalSlides;
+
+  currentSlide = index;
+
+  // Slide-specific triggers
+  if (index === 10) setTimeout(animateMetrics, 350);
+  if (index === 0 || index === 14) initParticles(index === 0 ? 'particles' : 'particles-end');
+
+  // Cleanup after animation completes
+  setTimeout(function() {
+    if (oldSlide) {
+      oldSlide.style.transition = 'none';
+      oldSlide.style.opacity = '';
+      oldSlide.style.transform = '';
+    }
+    if (newSlide) {
+      newSlide.style.transition = '';
+      newSlide.style.opacity = '';
+      newSlide.style.transform = '';
+    }
+    isAnimating = false;
+  }, 420);
+}
+
+function nextSlide() { goToSlide(currentSlide + 1); }
+function prevSlide() { goToSlide(currentSlide - 1); }
+
+// ===== Keyboard Navigation =====
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    nextSlide();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    prevSlide();
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    goToSlide(0);
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    goToSlide(totalSlides - 1);
+  }
+});
+
+// ===== Touch Swipe =====
+var touchStartX = 0;
+document.addEventListener('touchstart', function(e) { touchStartX = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend', function(e) {
+  var diff = touchStartX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) nextSlide();
+    else prevSlide();
+  }
+});
+
+// ===== Mouse Wheel =====
+var wheelTimeout;
+document.addEventListener('wheel', function(e) {
+  e.preventDefault();
+  if (wheelTimeout) return;
+  wheelTimeout = setTimeout(function() { wheelTimeout = null; }, 700);
+  if (e.deltaY > 0) nextSlide();
+  else prevSlide();
+}, {passive: false});
+
+// ===== Cover Particles =====
+function initParticles(containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  var colors = ['#6366f1', '#06b6d4', '#ec4899', '#10b981', '#fbbf24', '#f97316'];
+  for (var i = 0; i < 30; i++) {
+    var p = document.createElement('div');
+    p.className = 'cover-particle';
+    var size = Math.random() * 6 + 3;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (Math.random() * 8 + 5) + 's';
+    p.style.animationDelay = (Math.random() * 6) + 's';
+    container.appendChild(p);
+  }
+}
+
+// ===== Architecture Layer Highlight =====
+function highlightLayer(layer) {
+  var layers = document.querySelectorAll('#arch-svg .layer');
+  for (var i = 0; i < layers.length; i++) {
+    var rect = layers[i].querySelector('rect');
+    var isTarget = layers[i].id === 'layer-' + layer;
+    rect.setAttribute('stroke', isTarget ? '#1e293b' : rect.getAttribute('data-orig-stroke') || rect.getAttribute('stroke'));
+    if (!rect.getAttribute('data-orig-stroke')) {
+      rect.setAttribute('data-orig-stroke', rect.getAttribute('stroke'));
+    }
+    rect.setAttribute('stroke-width', isTarget ? '3' : '2');
+  }
+  var info = {
+    frontend: '前端展示层：Vue 3 SPA，History 路由模式，Element Plus UI，Pinia 状态管理，Axios 拦截器自动注入 JWT Token',
+    backend: '业务逻辑层：Spring Boot 3.3.5，Spring Security + JWT 无状态认证，MyBatis-Plus ORM，RESTful API，全局异常处理',
+    data: 'MySQL 8.0 主存储：16张业务表，完整的用户-商品-订单-行为数据模型，支持事务和关联查询',
+    cache: 'Redis 7.x 缓存层：推荐结果缓存(TTL 30min)，相似商品缓存(TTL 2-4h)，用户会话缓存，显著降低数据库压力',
+    async: '异步任务层：@Async 异步刷新推荐（用户行为后触发），@Scheduled 定时离线全量重建（Cron: 0 0 2 * * ?），支持管理员手动触发重算'
+  };
+  document.getElementById('arch-info').textContent = info[layer] || '';
+}
+
+// ===== Pipeline Focus =====
+function focusPipeline(node) {
+  var nodes = document.querySelectorAll('.pipe-node');
+  for (var i = 0; i < nodes.length; i++) nodes[i].classList.remove('active-node');
+  var el = document.querySelector('.pipe-node[data-node="' + node + '"]');
+  if (el) el.classList.add('active-node');
+}
+
+// ===== Weight Sliders =====
+function updateWeights() {
+  var cf = parseFloat(document.getElementById('slider-cf').value);
+  var cb = parseFloat(document.getElementById('slider-cb').value);
+  var hot = parseFloat(document.getElementById('slider-hot').value);
+  var rt = parseFloat(document.getElementById('slider-rt').value);
+  var sum = cf + cb + hot + rt;
+
+  document.getElementById('val-cf').textContent = cf.toFixed(2);
+  document.getElementById('val-cb').textContent = cb.toFixed(2);
+  document.getElementById('val-hot').textContent = hot.toFixed(2);
+  document.getElementById('val-rt').textContent = rt.toFixed(2);
+  document.getElementById('weight-sum').textContent = '总和：' + sum.toFixed(2);
+  document.getElementById('weight-sum').style.color = Math.abs(sum - 1) < 0.01 ? 'var(--green)' : 'var(--red)';
+
+  var max = Math.max(cf, cb, hot, rt) || 1;
+  document.getElementById('bar-cf').style.height = (cf / max * 100) + 'px';
+  document.getElementById('bar-cb').style.height = (cb / max * 100) + 'px';
+  document.getElementById('bar-hot').style.height = (hot / max * 100) + 'px';
+  document.getElementById('bar-rt').style.height = (rt / max * 100) + 'px';
+}
+
+// ===== Metrics Animation =====
+function animateMetrics() {
+  var cards = document.querySelectorAll('.count-up');
+  for (var c = 0; c < cards.length; c++) {
+    (function(card) {
+      var target = parseFloat(card.getAttribute('data-target'));
+      card.textContent = '0%';
+      var duration = 1200;
+      var start = performance.now();
+      function tick(now) {
+        var elapsed = now - start;
+        var progress = Math.min(elapsed / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        card.textContent = (target * eased).toFixed(1) + '%';
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    })(cards[c]);
+  }
+}
+
+// ===== Data Flow Animation =====
+var flowTimer = null;
+function animateFlow() {
+  var steps = document.querySelectorAll('#data-flow-anim .flow-step');
+  for (var s = 0; s < steps.length; s++) steps[s].classList.remove('highlight');
+  if (flowTimer) clearTimeout(flowTimer);
+
+  var i = 0;
+  function highlightNext() {
+    if (i > 0) steps[i - 1].classList.remove('highlight');
+    if (i >= steps.length) { flowTimer = null; return; }
+    steps[i].classList.add('highlight');
+    i++;
+    flowTimer = setTimeout(highlightNext, 500);
+  }
+  highlightNext();
+}
+
+// ===== Feature Tabs =====
+function switchFeatureTab(tab) {
+  var tabs = document.querySelectorAll('#feature-tabs .tab');
+  for (var t = 0; t < tabs.length; t++) tabs[t].classList.remove('active');
+  document.getElementById('feature-content-user').style.display = tab === 'user' ? '' : 'none';
+  document.getElementById('feature-content-admin').style.display = tab === 'admin' ? '' : 'none';
+  tabs[tab === 'user' ? 0 : 1].classList.add('active');
+}
+
+// ===== Init =====
+function init() {
+  initNavDots();
+  initParticles('particles');
+  document.getElementById('progress-bar').style.width = (1 / totalSlides * 100) + '%';
+  document.getElementById('page-indicator').textContent = '1 / ' + totalSlides;
+}
+
+init();
+</script>
+</body>
+</html>
